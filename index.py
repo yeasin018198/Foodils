@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.secret_key = "secret_key_123"
 
 # MongoDB Connection
-MONGO_URI = os.environ.get("MONGODB_URI", "mongodb+srv://admin:pass@cluster.mongodb.net/food_db")
+MONGO_URI = os.environ.get("MONGODB_URI", "mongodb+srv://akash:akash@cluster0.hjyqogc.mongodb.net/?appName=Cluster0")
 client = MongoClient(MONGO_URI)
 db = client.food_db
 products = db.products
