@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "index.py" }
+  ],
+  "functions": {
+    "index.py": {
+      "runtime": "vercel-python@0.0.6"
+    }
+  }
+}
