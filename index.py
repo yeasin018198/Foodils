@@ -1,246 +1,225 @@
-import os
-from flask import Flask, render_template_string, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template_string, request, redirect, url_for
 from pymongo import MongoClient
 from bson.objectid import ObjectId
-from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "secret_key_123"
 
-# MongoDB Connection
-MONGO_URI = os.environ.get("MONGODB_URI", "mongodb+srv://akash:akash@cluster0.hjyqogc.mongodb.net/?appName=Cluster0")
+# --- আপনার মংগোডিবি কানেকশন ---
+MONGO_URI = "mongodb+srv://akash:akash@cluster0.hjyqogc.mongodb.net/?appName=Cluster0"
 client = MongoClient(MONGO_URI)
-db = client.food_db
-products = db.products
-orders = db.orders
+db = client['food_business'] # ডাটাবেস নাম
 
-# --- UI ডিজাইনের জন্য CSS/HTML (Tailwind) ---
-BASE_HTML = """
+# কালেকশনগুলো
+settings_col = db['settings']
+foods_col = db['foods']
+categories_col = db['categories']
+
+# সাইট লোড হওয়ার সময় ডিফল্ট ডাটা চেক করা
+def get_site_settings():
+    conf = settings_col.find_one({"id": "config"})
+    if not conf:
+        default_conf = {
+            "id": "config",
+            "site_name": "My Restaurant",
+            "site_logo": "https://cdn-icons-png.flaticon.com/512/706/706164.png",
+            "dmca_text": "© 2024 All Rights Reserved",
+            "fb_url": "https://facebook.com",
+            "whatsapp_num": "01700000000"
+        }
+        settings_col.insert_one(default_conf)
+        return default_conf
+    return conf
+
+# --- HTML CSS & JS (সব এক জায়গায়) ---
+HEAD_HTML = """
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600&display=swap');
+    body { font-family: 'Hind Siliguri', sans-serif; background: #f3f4f6; }
+    .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+    .sidebar-link:hover { background: #374151; border-radius: 8px; }
+</style>
+"""
+
+# ইউজার প্যানেল টেমপ্লেট
+USER_TEMPLATE = """
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Food Express</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .food-card:hover { transform: translateY(-5px); transition: 0.3s; }
-        .discount-badge { position: absolute; top: 10px; left: 10px; background: #ef4444; color: white; padding: 2px 8px; border-radius: 5px; font-size: 12px; }
-    </style>
+    <title>{{ settings.site_name }}</title>
+    """ + HEAD_HTML + """
 </head>
-<body class="bg-gray-50">
+<body>
     <!-- Navbar -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="bg-orange-500 p-2 rounded-lg text-white"><i class="fa fa-utensils"></i></div>
-                <span class="text-xl font-black text-gray-800">FOOD<span class="text-orange-500">EXPRESS</span></span>
-            </div>
-            <div class="flex items-center gap-4">
-                {% if session.user %}
-                    <div class="text-right hidden md:block">
-                        <p class="text-xs text-gray-500">স্বাগতম</p>
-                        <p class="text-sm font-bold">{{ session.user.name }}</p>
-                    </div>
-                    <a href="/logout" class="text-red-500 border border-red-500 px-3 py-1 rounded-md text-sm hover:bg-red-50">লগ আউট</a>
-                {% else %}
-                    <div id="g_id_onload" data-client_id="{{ google_id }}" data-callback="handleCredentialResponse"></div>
-                    <div class="g_id_signin" data-type="standard"></div>
-                {% endif %}
-                <a href="/admin" class="text-gray-400 hover:text-orange-500"><i class="fa fa-cog"></i></a>
-            </div>
+    <nav class="glass sticky top-0 z-50 shadow-sm p-3 flex items-center animate__animated animate__fadeInDown">
+        <div class="flex-1">
+            <img src="{{ settings.site_logo }}" class="w-10 h-10 rounded-full shadow-md">
+        </div>
+        <div class="flex-1 text-center">
+            <h1 class="text-xl font-bold text-orange-600">{{ settings.site_name }}</h1>
+        </div>
+        <div class="flex-1 text-right">
+            <a href="/admin" class="text-sm text-gray-500"><i class="fas fa-user-shield"></i> Admin</a>
         </div>
     </nav>
 
-    <div class="container mx-auto px-4 py-6">
-        {% block content %}{% endblock %}
-    </div>
-
-    <script>
-        function handleCredentialResponse(response) {
-            fetch('/api/google-login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ token: response.credential })
-            }).then(() => window.location.reload());
-        }
-
-        function placeOrder(productId, name) {
-            const variant = document.getElementById(`variant-${productId}`).value;
-            const price = document.getElementById(`variant-${productId}`).options[document.getElementById(`variant-${productId}`).selectedIndex].getAttribute('data-price');
-            
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    fetch('/api/checkout', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            p_id: productId, p_name: name, variant: variant, price: price,
-                            lat: pos.coords.latitude, lng: pos.coords.longitude
-                        })
-                    }).then(res => res.json()).then(data => {
-                        alert("অর্ডার সফল হয়েছে! ক্যাশ অন ডেলিভারি (COD)");
-                        window.location.href = "/";
-                    });
-                });
-            }
-        }
-    </script>
-</body>
-</html>
-"""
-
-# --- Routes ---
-
-@app.route('/')
-def home():
-    selected_cat = request.args.get('category', 'All')
-    if selected_cat == 'All':
-        food_items = list(products.find())
-    else:
-        food_items = list(products.find({"category": selected_cat}))
-    
-    categories = ["All", "Burger", "Pizza", "Drinks", "Dessert", "Chicken"]
-    google_id = os.environ.get("GOOGLE_CLIENT_ID", "YOUR_ID")
-
-    content = """
-    <!-- Hero Banner -->
-    <div class="bg-gradient-to-r from-orange-400 to-orange-600 rounded-2xl p-8 mb-8 text-white">
-        <h1 class="text-3xl font-bold">আজকের অফার! 🔥</h1>
-        <p>সব খাবারে ২০% পর্যন্ত ছাড় এবং ফ্রি লাইভ ডেলিভারি ট্র্যাকিং।</p>
-    </div>
-
-    <!-- Category Tabs -->
-    <div class="flex gap-4 mb-8 overflow-x-auto pb-2">
+    <!-- Categories -->
+    <div class="p-4 flex gap-2 overflow-x-auto no-scrollbar animate__animated animate__fadeIn">
+        <a href="/" class="bg-orange-500 text-white px-4 py-2 rounded-full whitespace-nowrap">All Items</a>
         {% for cat in categories %}
-        <a href="/?category={{cat}}" class="px-6 py-2 rounded-full border {{ 'bg-orange-500 text-white border-orange-500' if selected_cat == cat else 'bg-white text-gray-600' }} shadow-sm whitespace-nowrap">
-            {{cat}}
-        </a>
+        <a href="/?cat={{ cat.name }}" class="bg-white px-4 py-2 rounded-full shadow-sm whitespace-nowrap">{{ cat.name }}</a>
         {% endfor %}
     </div>
 
     <!-- Food Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {% for item in foods %}
-        <div class="food-card bg-white rounded-2xl shadow-sm border overflow-hidden relative">
-            {% if item.discount %}
-            <div class="discount-badge">{{ item.discount }}% OFF</div>
-            {% endif %}
-            <img src="{{ item.image }}" class="w-full h-48 object-cover">
-            <div class="p-4">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-bold text-orange-500 uppercase">{{ item.category }}</span>
-                    <span class="text-xs text-gray-500"><i class="fa fa-star text-yellow-400"></i> {{ item.rating }}</span>
-                </div>
-                <h3 class="font-bold text-lg text-gray-800">{{ item.name }}</h3>
-                <p class="text-xs text-gray-500 mb-4">{{ item.desc }}</p>
-                
-                <!-- Variant Selector -->
-                <label class="text-xs font-bold text-gray-400 uppercase">Select Size/Type</p>
-                <select id="variant-{{ item._id }}" class="w-full border p-2 rounded-lg mt-1 text-sm bg-gray-50">
-                    {% for v in item.variants %}
-                    <option value="{{ v.name }}" data-price="{{ v.price }}">{{ v.name }} - {{ v.price }}৳</option>
-                    {% endfor %}
-                </select>
-
-                <button onclick="placeOrder('{{ item._id }}', '{{ item.name }}')" class="w-full bg-orange-500 text-white mt-4 py-3 rounded-xl font-bold hover:bg-orange-600 transition flex items-center justify-center gap-2">
-                    <i class="fa fa-shopping-basket"></i> Order Now (COD)
-                </button>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+        {% for food in foods %}
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden animate__animated animate__zoomIn">
+            <img src="{{ food.image }}" class="w-full h-40 object-cover">
+            <div class="p-3 text-center">
+                <h3 class="font-semibold text-gray-800">{{ food.name }}</h3>
+                <p class="text-orange-600 font-bold">৳{{ food.price }}</p>
+                <a href="https://wa.me/{{ settings.whatsapp_num }}?text=Hello, I want to order {{ food.name }}" 
+                   class="mt-2 block bg-green-500 text-white py-2 rounded-xl text-sm font-bold">
+                   <i class="fab fa-whatsapp"></i> Order Now
+                </a>
             </div>
         </div>
         {% endfor %}
     </div>
-    """
-    return render_template_string(BASE_HTML + content, foods=food_items, categories=categories, selected_cat=selected_cat, google_id=google_id)
 
-@app.route('/api/google-login', methods=['POST'])
-def google_login():
-    session['user'] = {"name": "Test User", "email": "user@gmail.com"}
-    return jsonify({"success": True})
+    <!-- Footer -->
+    <footer class="mt-10 p-6 bg-white text-center border-t">
+        <p class="text-gray-500 text-sm">{{ settings.dmca_text }}</p>
+        <div class="flex justify-center gap-5 mt-4">
+            <a href="{{ settings.fb_url }}" class="text-blue-600 text-2xl"><i class="fab fa-facebook"></i></a>
+            <a href="https://wa.me/{{ settings.whatsapp_num }}" class="text-green-500 text-2xl"><i class="fab fa-whatsapp"></i></a>
+        </div>
+    </footer>
+</body>
+</html>
+"""
 
-@app.route('/api/checkout', methods=['POST'])
-def checkout():
-    data = request.json
-    order = {
-        "user": session.get('user', {"name": "Guest"}),
-        "product": data['p_name'],
-        "variant": data['variant'],
-        "total": data['price'],
-        "lat": data['lat'],
-        "lng": data['lng'],
-        "status": "Pending",
-        "time": datetime.now()
-    }
-    orders.insert_one(order)
-    return jsonify({"success": True})
+# এডমিন প্যানেল টেমপ্লেট
+ADMIN_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+    """ + HEAD_HTML + """
+</head>
+<body class="flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <div class="w-full md:w-64 bg-slate-900 text-white min-h-screen p-5">
+        <h2 class="text-2xl font-bold text-orange-400 mb-8 border-b border-gray-700 pb-2">Admin Panel</h2>
+        <nav class="space-y-2">
+            <a href="/admin" class="block p-3 sidebar-link"><i class="fas fa-chart-line mr-2"></i> Dashboard</a>
+            <a href="/admin/add-food" class="block p-3 sidebar-link"><i class="fas fa-utensils mr-2"></i> Add Food</a>
+            <a href="/admin/add-category" class="block p-3 sidebar-link"><i class="fas fa-tags mr-2"></i> Add Category</a>
+            <a href="/admin/settings" class="block p-3 sidebar-link"><i class="fas fa-tools mr-2"></i> Site Settings</a>
+            <a href="/" class="block p-3 sidebar-link text-blue-400"><i class="fas fa-external-link-alt mr-2"></i> View Site</a>
+        </nav>
+    </div>
 
-# --- Admin Section ---
+    <!-- Main Content -->
+    <div class="flex-1 p-6 md:p-10">
+        {% if page == 'dashboard' %}
+        <h1 class="text-3xl font-bold mb-6">Dashboard Overview</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+            <div class="bg-blue-600 p-8 rounded-2xl shadow-lg">
+                <p class="text-lg">Total Foods</p>
+                <h2 class="text-4xl font-bold">{{ f_count }}</h2>
+            </div>
+            <div class="bg-purple-600 p-8 rounded-2xl shadow-lg">
+                <p class="text-lg">Categories</p>
+                <h2 class="text-4xl font-bold">{{ c_count }}</h2>
+            </div>
+        </div>
+
+        {% elif page == 'add-food' %}
+        <h1 class="text-3xl font-bold mb-6">Add New Food Item</h1>
+        <form action="/admin/add-food" method="POST" class="max-w-lg bg-white p-6 rounded-2xl shadow-lg space-y-4">
+            <input type="text" name="name" placeholder="Food Name" class="w-full border p-3 rounded-lg" required>
+            <input type="number" name="price" placeholder="Price" class="w-full border p-3 rounded-lg" required>
+            <input type="text" name="image" placeholder="Image URL" class="w-full border p-3 rounded-lg" required>
+            <button class="w-full bg-orange-500 text-white py-3 rounded-lg font-bold">Save Food</button>
+        </form>
+
+        {% elif page == 'add-category' %}
+        <h1 class="text-3xl font-bold mb-6">Manage Categories</h1>
+        <form action="/admin/add-category" method="POST" class="max-w-lg bg-white p-6 rounded-2xl shadow-lg flex gap-2">
+            <input type="text" name="cat_name" placeholder="Category Name" class="flex-1 border p-3 rounded-lg" required>
+            <button class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold">Add</button>
+        </form>
+
+        {% elif page == 'settings' %}
+        <h1 class="text-3xl font-bold mb-6">Site Configuration</h1>
+        <form action="/admin/settings" method="POST" class="max-w-xl bg-white p-6 rounded-2xl shadow-lg space-y-4">
+            <div><label class="text-sm font-bold">Site Name</label><input type="text" name="site_name" value="{{ settings.site_name }}" class="w-full border p-3 rounded-lg"></div>
+            <div><label class="text-sm font-bold">Logo URL</label><input type="text" name="site_logo" value="{{ settings.site_logo }}" class="w-full border p-3 rounded-lg"></div>
+            <div><label class="text-sm font-bold">DMCA/Footer Text</label><input type="text" name="dmca_text" value="{{ settings.dmca_text }}" class="w-full border p-3 rounded-lg"></div>
+            <div><label class="text-sm font-bold">Facebook URL</label><input type="text" name="fb_url" value="{{ settings.fb_url }}" class="w-full border p-3 rounded-lg"></div>
+            <div><label class="text-sm font-bold">WhatsApp Number (Ex: 88017...)</label><input type="text" name="whatsapp_num" value="{{ settings.whatsapp_num }}" class="w-full border p-3 rounded-lg"></div>
+            <button class="w-full bg-slate-900 text-white py-3 rounded-lg font-bold">Update All Settings</button>
+        </form>
+        {% endif %}
+    </div>
+</body>
+</html>
+"""
+
+# --- ROUTES ---
+
+@app.route('/')
+def index():
+    settings = get_site_settings()
+    foods = list(foods_col.find())
+    categories = list(categories_col.find())
+    return render_template_string(USER_TEMPLATE, settings=settings, foods=foods, categories=categories)
 
 @app.route('/admin')
-def admin_login_page():
-    return render_template_string(BASE_HTML + """
-        <div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-lg mt-10">
-            <h2 class="text-2xl font-bold mb-6">Admin Panel</h2>
-            <form action="/admin/dashboard" method="POST">
-                <input type="password" name="pass" placeholder="Password" class="w-full border p-3 rounded-xl mb-4 focus:ring-2 ring-orange-500 outline-none">
-                <button class="w-full bg-gray-800 text-white py-3 rounded-xl">Login</button>
-            </form>
-        </div>
-    """)
+def admin_home():
+    f_count = foods_col.count_documents({})
+    c_count = categories_col.count_documents({})
+    return render_template_string(ADMIN_TEMPLATE, page='dashboard', f_count=f_count, c_count=c_count)
 
-@app.route('/admin/dashboard', methods=['POST', 'GET'])
-def admin_dashboard():
-    # এখানে পাসওয়ার্ড চেক করতে হবে (সহজ রাখার জন্য স্কিপ করা হলো)
-    all_orders = list(orders.find().sort("time", -1))
+@app.route('/admin/add-food', methods=['GET', 'POST'])
+def admin_add_food():
+    if request.method == 'POST':
+        foods_col.insert_one({
+            "name": request.form.get('name'),
+            "price": request.form.get('price'),
+            "image": request.form.get('image')
+        })
+        return redirect('/admin')
+    return render_template_string(ADMIN_TEMPLATE, page='add-food')
+
+@app.route('/admin/add-category', methods=['GET', 'POST'])
+def admin_add_cat():
+    if request.method == 'POST':
+        categories_col.insert_one({"name": request.form.get('cat_name')})
+        return redirect('/admin')
+    return render_template_string(ADMIN_TEMPLATE, page='add-category')
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+def admin_settings():
+    if request.method == 'POST':
+        updated_data = {
+            "site_name": request.form.get('site_name'),
+            "site_logo": request.form.get('site_logo'),
+            "dmca_text": request.form.get('dmca_text'),
+            "fb_url": request.form.get('fb_url'),
+            "whatsapp_num": request.form.get('whatsapp_num'),
+        }
+        settings_col.update_one({"id": "config"}, {"$set": updated_data})
+        return redirect('/admin/settings')
     
-    content = """
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-        <div class="bg-blue-500 text-white p-6 rounded-2xl">
-            <p class="text-sm opacity-80">Total Orders</p>
-            <h2 class="text-3xl font-bold">{{ orders|length }}</h2>
-        </div>
-        <div class="bg-green-500 text-white p-6 rounded-2xl">
-            <p class="text-sm opacity-80">Payment Method</p>
-            <h2 class="text-3xl font-bold">COD</h2>
-        </div>
-    </div>
+    settings = get_site_settings()
+    return render_template_string(ADMIN_TEMPLATE, page='settings', settings=settings)
 
-    <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-        <div class="p-4 border-b font-bold text-gray-700 bg-gray-50">Recent Orders (Live Locations)</div>
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="text-sm text-gray-400 bg-gray-50">
-                    <th class="p-4">Customer</th>
-                    <th class="p-4">Food & Variant</th>
-                    <th class="p-4">Location</th>
-                    <th class="p-4">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for o in orders %}
-                <tr class="border-b hover:bg-gray-50 transition">
-                    <td class="p-4 font-bold">{{ o.user.name }}</td>
-                    <td class="p-4">{{ o.product }} ({{ o.variant }}) - <span class="text-orange-500 font-bold">{{ o.total }}৳</span></td>
-                    <td class="p-4">
-                        <a href="https://www.google.com/maps?q={{o.lat}},{{o.lng}}" target="_blank" class="text-blue-500 flex items-center gap-1">
-                            <i class="fa fa-map-marker-alt"></i> View on Map
-                        </a>
-                    </td>
-                    <td class="p-4"><span class="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-bold">{{ o.status }}</span></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    """
-    return render_template_string(BASE_HTML + content, orders=all_orders)
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
