@@ -10,7 +10,7 @@ app.secret_key = "secret_key_123"
 # --- MongoDB Connection ---
 MONGO_URI = "mongodb+srv://akash:akash@cluster0.hjyqogc.mongodb.net/?appName=Cluster0"
 client = MongoClient(MONGO_URI)
-db = client['food_pro_db']
+db = client['food_prodb']
 
 # Collections
 settings_col = db['settings']
