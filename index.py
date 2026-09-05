@@ -121,7 +121,7 @@ def home():
         <!-- Categories -->
         <div class="p-4 md:p-8">
             <h2 class="text-xl md:text-3xl font-bold mb-8 flex items-center gap-2">
-                <span class="w-2 h-8 bg-{{ settings.theme }}-600 rounded-full"></span> সকল ক্যাটাগরি
+                <span class="w-2 h-8 bg-{{ settings.theme }}-600 rounded-full"></span> All Categories
             </h2>
             <div id="catGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
                 {% for cat in categories %}
