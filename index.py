@@ -130,7 +130,7 @@ def home():
                         <img src="{{ cat.logo }}" class="w-full h-full object-cover">
                     </div>
                     <h3 class="font-bold text-lg md:text-2xl text-gray-800">{{ cat.name }}</h3>
-                    <span class="text-xs text-gray-400 mt-1">খাবারগুলো দেখতে ক্লিক করুন</span>
+                    <span class="text-xs text-gray-400 mt-1">Click To See All Items</span>
                 </a>
                 {% endfor %}
             </div>
