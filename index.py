@@ -28,10 +28,14 @@ def get_site_settings():
             "id": "config", "name": "Foodils", "logo": "https://i.imgur.com/86S7R6U.png",
             "fb": "#", "whatsapp": "8801700000000", "dmca": "DMCA Protected", 
             "pass": "admin123", "privacy": "Privacy Policy Content", "copyright": "© 2024 Foodils",
-            "theme": "orange", "footer_text": "Best Food delivery in town", "header_text": "Welcome to our shop"
+            "theme": "orange", "footer_text": "Best Food delivery in town", "header_text": "Welcome to our shop",
+            "tax_percent": "0", "delivery_msg": "ডেলিভারি চার্জ দোকান থেকে জানানো হবে"
         }
         settings_col.insert_one(default)
         return default
+    # নতুন ফিল্ডগুলো না থাকলে ডিফল্ট সেট করে নেওয়া
+    if 'tax_percent' not in conf: conf['tax_percent'] = "0"
+    if 'delivery_msg' not in conf: conf['delivery_msg'] = "ডেলিভারি চার্জ দোকান থেকে জানানো হবে"
     return conf
 
 def track_view():
@@ -58,6 +62,7 @@ HEAD = """
     .food-card img { height: 160px; object-fit: cover; width: 100%; border-radius: 12px; }
     @media (min-width: 768px) { .food-card img { height: 240px; } }
     .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+    .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 </style>
 <script>
     let cart = JSON.parse(localStorage.getItem('my_cart')) || [];
@@ -83,9 +88,9 @@ def home():
     <html lang="bn">
     <head>"""+HEAD+"""<title>{{ settings.name }}</title></head>
     <body class="max-w-screen-2xl mx-auto">
-        <nav class="glass sticky top-0 z-50 px-4 py-3 flex justify-between items-center border-b">
+        <nav class="glass sticky top-0 z-50 px-4 py-3 flex justify-between items-center border-b animate__animated animate__fadeInDown">
             <div class="flex items-center gap-3">
-                <img src="{{ settings.logo }}" class="w-10 h-10 md:w-14 md:h-14 rounded-full ring-2 ring-{{ settings.theme }}-500">
+                <img src="{{ settings.logo }}" class="w-10 h-10 md:w-14 md:h-14 rounded-full ring-2 ring-{{ settings.theme }}-500 animate__animated animate__rotateIn">
                 <h1 class="text-xl md:text-3xl font-bold text-{{ settings.theme }}-600">{{ settings.name }}</h1>
             </div>
             <div class="flex items-center gap-4">
@@ -99,7 +104,7 @@ def home():
 
         <!-- Search Bar -->
         <div class="p-4 md:px-8">
-            <div class="relative max-w-2xl mx-auto mt-4">
+            <div class="relative max-w-2xl mx-auto mt-4 animate__animated animate__zoomIn">
                 <input type="text" id="catSearch" onkeyup="searchCat()" placeholder="খুঁজুন আপনার পছন্দের খাবার ক্যাটাগরি..." class="w-full p-4 pl-12 rounded-2xl border-none shadow-md outline-none focus:ring-2 focus:ring-{{ settings.theme }}-500">
                 <i class="fas fa-search absolute left-4 top-5 text-gray-400"></i>
             </div>
@@ -107,7 +112,7 @@ def home():
 
         <!-- Banner -->
         <div class="p-4">
-            <div class="bg-{{ settings.theme }}-600 rounded-[30px] p-8 md:p-16 text-white shadow-lg relative overflow-hidden text-center">
+            <div class="bg-{{ settings.theme }}-600 rounded-[30px] p-8 md:p-16 text-white shadow-lg relative overflow-hidden text-center animate__animated animate__fadeIn">
                 <h2 class="text-2xl md:text-5xl font-black relative z-10 leading-tight">{{ settings.header_text }}</h2>
                 <i class="fas fa-pizza-slice absolute -right-6 -bottom-6 text-8xl md:text-[200px] opacity-10 rotate-12"></i>
             </div>
@@ -120,7 +125,7 @@ def home():
             </h2>
             <div id="catGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8">
                 {% for cat in categories %}
-                <a href="/category/{{ cat.name }}" class="cat-item category-card bg-white p-4 rounded-[30px] shadow-sm border text-center flex flex-col items-center">
+                <a href="/category/{{ cat.name }}" class="cat-item category-card bg-white p-4 rounded-[30px] shadow-sm border text-center flex flex-col items-center animate__animated animate__fadeInUp">
                     <div class="w-24 h-24 md:w-40 md:h-40 rounded-full border-4 border-gray-100 overflow-hidden mb-4">
                         <img src="{{ cat.logo }}" class="w-full h-full object-cover">
                     </div>
@@ -131,7 +136,7 @@ def home():
             </div>
         </div>
 
-        <a href="/cart" class="fixed bottom-6 right-6 bg-{{ settings.theme }}-600 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-2xl z-50 animate__animated animate__bounceIn">
+        <a href="/cart" class="fixed bottom-6 right-6 bg-{{ settings.theme }}-600 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-2xl z-50 animate__animated animate__bounceIn animate__infinite animate__slow">
             <i class="fas fa-shopping-cart"></i>
             <span class="cart-count-badge absolute top-0 right-0 bg-red-600 text-xs w-6 h-6 flex items-center justify-center rounded-full border-2 border-white">0</span>
         </a>
@@ -167,7 +172,7 @@ def category_foods(name):
     <html>
     <head>"""+HEAD+"""<title>{{ name }} - Items</title></head>
     <body class="bg-gray-50 pb-10">
-        <nav class="glass sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b">
+        <nav class="glass sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b animate__animated animate__fadeInDown">
             <div class="flex items-center gap-4">
                 <a href="/" class="bg-gray-100 w-10 h-10 flex items-center justify-center rounded-full"><i class="fas fa-arrow-left"></i></a>
                 <h1 class="text-xl font-bold">{{ name }} আইটেমসমূহ</h1>
@@ -180,7 +185,7 @@ def category_foods(name):
 
         <div class="p-4 md:p-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8">
             {% for food in foods %}
-            <a href="/food/{{ food._id }}" class="bg-white rounded-2xl p-3 md:p-5 shadow-sm hover:shadow-xl transition-all border animate__animated animate__fadeIn">
+            <a href="/food/{{ food._id }}" class="bg-white rounded-2xl p-3 md:p-5 shadow-sm hover:shadow-xl transition-all border animate__animated animate__fadeInUp">
                 <img src="{{ food.image }}" class="rounded-xl object-cover w-full h-40 md:h-56">
                 <h4 class="text-sm md:text-xl font-bold mt-4 text-gray-800 truncate">{{ food.name }}</h4>
                 <div class="flex justify-between items-center mt-2">
@@ -203,14 +208,14 @@ def food_details(id):
     <html>
     <head>"""+HEAD+"""<title>{{ food.name }}</title></head>
     <body class="bg-gray-50 pb-24">
-        <div class="max-w-4xl mx-auto bg-white min-h-screen shadow-lg relative">
+        <div class="max-w-4xl mx-auto bg-white min-h-screen shadow-lg relative animate__animated animate__fadeIn">
             <a href="/category/{{ food.category }}" class="absolute top-4 left-4 z-50 bg-white/80 p-3 rounded-2xl shadow-xl border">
                 <i class="fas fa-chevron-left"></i> Back
             </a>
 
             <div class="h-64 md:h-[500px]"><img src="{{ food.image }}" class="w-full h-full object-cover"></div>
             
-            <div class="p-6 md:p-12 -mt-10 bg-white rounded-t-[40px] relative z-10">
+            <div class="p-6 md:p-12 -mt-10 bg-white rounded-t-[40px] relative z-10 animate__animated animate__slideInUp">
                 <h1 class="text-3xl md:text-6xl font-black text-gray-900 leading-tight">{{ food.name }}</h1>
                 <p class="text-3xl md:text-4xl font-black text-{{ settings.theme }}-600 mt-4">৳{{ food.price }}</p>
 
@@ -298,46 +303,87 @@ def cart_view():
     <!DOCTYPE html>
     <html>
     <head>"""+HEAD+"""<title>My Cart</title></head>
-    <body class="bg-white pb-32">
-        <nav class="glass sticky top-0 z-50 px-4 py-3 border-b flex items-center gap-4">
+    <body class="bg-white pb-64">
+        <nav class="glass sticky top-0 z-50 px-4 py-3 border-b flex items-center gap-4 animate__animated animate__fadeInDown">
             <a href="/" class="bg-gray-100 w-10 h-10 flex items-center justify-center rounded-full"><i class="fas fa-arrow-left"></i></a>
             <h1 class="text-xl font-bold">আমার কার্ট</h1>
         </nav>
         <div id="cartList" class="p-4 space-y-4"></div>
-        <div class="fixed bottom-0 left-0 right-0 p-6 bg-white border-t shadow-2xl">
-            <div class="flex justify-between text-xl font-black mb-4"><span>মোট বিল:</span> <span id="totalPrice">৳0</span></div>
+        
+        <div class="fixed bottom-0 left-0 right-0 p-6 bg-white border-t shadow-2xl animate__animated animate__fadeInUp">
+            <div class="space-y-2 mb-4 text-sm font-bold text-gray-600">
+                <div class="flex justify-between"><span>আইটেম মোট:</span> <span id="subTotal">৳0</span></div>
+                <div class="flex justify-between"><span>টেক্স ({{ settings.tax_percent }}%):</span> <span id="taxAmount">৳0</span></div>
+                <div class="flex justify-between text-{{ settings.theme }}-600 italic"><span>ডেলিভারি চার্জ:</span> <span>{{ settings.delivery_msg }}</span></div>
+            </div>
+            <div class="flex justify-between text-xl font-black mb-4 border-t pt-2"><span>সর্বমোট বিল:</span> <span id="totalPrice">৳0</span></div>
             <button onclick="sendOrder()" class="w-full bg-green-500 text-white py-5 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl">
                 <i class="fab fa-whatsapp text-2xl"></i> হোয়াটসঅ্যাপে অর্ডার দিন
             </button>
         </div>
+
         <script>
+            let taxPercent = parseFloat("{{ settings.tax_percent }}");
+
             function renderCart() {
                 let list = document.getElementById('cartList');
-                let total = 0;
+                let subTotal = 0;
                 list.innerHTML = cart.length ? '' : '<div class="text-center py-20 text-gray-400"><i class="fas fa-shopping-basket text-5xl mb-4"></i><p>কার্ট খালি!</p></div>';
+                
                 cart.forEach((item, i) => {
-                    total += item.price * item.qty;
-                    list.innerHTML += `<div class="flex gap-4 bg-gray-50 p-4 rounded-2xl border relative">
+                    subTotal += item.price * item.qty;
+                    list.innerHTML += `<div class="flex gap-4 bg-gray-50 p-4 rounded-2xl border relative animate__animated animate__fadeInLeft">
                         <img src="${item.img}" class="w-20 h-20 rounded-xl object-cover">
-                        <div class="flex-1"><h4 class="font-bold">${item.name}</h4><p class="text-orange-600 font-bold">৳${item.price} x ${item.qty}</p>
-                        <p class="text-[10px] text-gray-400">${item.addons.join(', ')}</p></div>
-                        <button onclick="remove(${i})" class="text-red-500 p-2"><i class="fas fa-trash-alt"></i></button></div>`;
+                        <div class="flex-1">
+                            <h4 class="font-bold">${item.name}</h4>
+                            <p class="text-orange-600 font-bold">৳${item.price}</p>
+                            <!-- Quantity Update -->
+                            <div class="flex items-center gap-4 mt-2">
+                                <button onclick="updateQty(${i}, -1)" class="w-8 h-8 bg-white border rounded-lg flex items-center justify-center"><i class="fas fa-minus text-xs"></i></button>
+                                <span class="font-bold">${item.qty}</span>
+                                <button onclick="updateQty(${i}, 1)" class="w-8 h-8 bg-white border rounded-lg flex items-center justify-center"><i class="fas fa-plus text-xs"></i></button>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-1">${item.addons.join(', ')}</p>
+                        </div>
+                        <button onclick="remove(${i})" class="text-red-500 p-2"><i class="fas fa-trash-alt"></i></button>
+                    </div>`;
                 });
-                document.getElementById('totalPrice').innerText = '৳' + total;
+
+                let tax = Math.round((subTotal * taxPercent) / 100);
+                let finalTotal = subTotal + tax;
+
+                document.getElementById('subTotal').innerText = '৳' + subTotal;
+                document.getElementById('taxAmount').innerText = '৳' + tax;
+                document.getElementById('totalPrice').innerText = '৳' + finalTotal;
             }
+
+            function updateQty(index, change) {
+                cart[index].qty = Math.max(1, cart[index].qty + change);
+                localStorage.setItem('my_cart', JSON.stringify(cart));
+                renderCart();
+            }
+
             function remove(i) { cart.splice(i, 1); localStorage.setItem('my_cart', JSON.stringify(cart)); renderCart(); updateCartBadge(); }
+            
             function sendOrder() {
                 if(!cart.length) return alert('কার্ট খালি!');
                 let msg = "*NEW ORDER*%0A------------------%0A";
-                let total = 0;
+                let subTotal = 0;
                 cart.forEach((item, i) => {
                     msg += `${i+1}. *${item.name}* (x${item.qty})%0A   ৳${item.price * item.qty}%0A`;
                     if(item.addons.length) msg += `   Extras: ${item.addons.join(', ')}%0A`;
-                    if(item.exclusions.length) msg += `   Without: ${item.exclusions.join(', ')}%0A`;
-                    total += item.price * item.qty;
-                    msg += `%0A`;
+                    subTotal += item.price * item.qty;
                 });
-                msg += `------------------%0A*Total: ৳${total}*%0A_Delivery charge extra._`;
+                
+                let tax = Math.round((subTotal * taxPercent) / 100);
+                let finalTotal = subTotal + tax;
+
+                msg += `------------------%0A`;
+                msg += `Subtotal: ৳${subTotal}%0A`;
+                msg += `Tax ({{ settings.tax_percent }}%): ৳${tax}%0A`;
+                msg += `*Grand Total: ৳${finalTotal}*%0A`;
+                msg += `_Delivery: {{ settings.delivery_msg }}_`;
+                
                 window.location.href = `https://wa.me/{{ wa_num }}?text=${msg}`;
                 localStorage.removeItem('my_cart');
             }
@@ -345,7 +391,7 @@ def cart_view():
         </script>
     </body>
     </html>
-    """, wa_num=wa_num)
+    """, wa_num=wa_num, settings=settings)
 
 # --- ADMIN ROUTES ---
 
@@ -353,7 +399,7 @@ def cart_view():
 def admin_dash():
     if not session.get('admin_logged'): return render_template_string("""
         <head>"""+HEAD+"""</head>
-        <div class="max-w-md mx-auto mt-20 p-10 bg-white shadow-2xl rounded-[40px] text-center border">
+        <div class="max-w-md mx-auto mt-20 p-10 bg-white shadow-2xl rounded-[40px] text-center border animate__animated animate__zoomIn">
             <h2 class="text-3xl font-black mb-8">Admin Access</h2>
             <form action="/admin/login" method="POST" class="space-y-6">
                 <input type="password" name="pass" placeholder="Password" class="w-full bg-gray-100 p-5 rounded-2xl text-center outline-none">
@@ -384,7 +430,7 @@ def admin_dash():
             </nav>
         </div>
 
-        <div class="flex-1 p-6 md:p-12">
+        <div class="flex-1 p-6 md:p-12 animate__animated animate__fadeIn">
             <h2 class="text-3xl font-black mb-10">Statistics</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-8 rounded-[30px] border shadow-sm">
@@ -412,7 +458,7 @@ def admin_manage_foods():
     all_cats = list(cats_col.find())
     return render_template_string("""
     <head>"""+HEAD+"""<title>Manage Foods</title></head>
-    <body class="bg-gray-50 p-6 md:p-12">
+    <body class="bg-gray-50 p-6 md:p-12 animate__animated animate__fadeIn">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-3xl font-black">সকল খাবারসমূহ</h2>
@@ -474,7 +520,7 @@ def admin_add_food():
     <head>"""+HEAD+"""</head>
     <body class="p-8 bg-gray-50">
         <a href="/admin/dash" class="inline-block mb-6 bg-gray-200 px-6 py-2 rounded-xl font-bold">Back to Dash</a>
-        <form method="POST" class="max-w-4xl mx-auto bg-white p-10 rounded-[40px] shadow-sm border space-y-6">
+        <form method="POST" class="max-w-4xl mx-auto bg-white p-10 rounded-[40px] shadow-sm border space-y-6 animate__animated animate__fadeIn">
             <h2 class="text-3xl font-black mb-4">নতুন খাবার যুক্ত করুন</h2>
             <div class="grid md:grid-cols-2 gap-6">
                 <input name="name" placeholder="Name" class="w-full border p-4 rounded-2xl outline-none" required>
@@ -551,7 +597,7 @@ def admin_add_cat():
     categories = list(cats_col.find())
     return render_template_string("""
     <head>"""+HEAD+"""</head>
-    <body class="p-8 bg-gray-50">
+    <body class="p-8 bg-gray-50 animate__animated animate__fadeIn">
         <a href="/admin/dash" class="inline-block mb-6 bg-gray-200 px-6 py-2 rounded-xl font-bold">Back to Dash</a>
         <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-10">
             <form method="POST" class="bg-white p-8 rounded-3xl shadow-sm border">
@@ -605,7 +651,7 @@ def admin_options():
     <head>"""+HEAD+"""</head>
     <body class="p-8 bg-gray-50">
         <a href="/admin/dash" class="inline-block mb-6 bg-gray-200 px-6 py-2 rounded-xl font-bold">Back to Dash</a>
-        <div class="max-w-4xl mx-auto">
+        <div class="max-w-4xl mx-auto animate__animated animate__fadeIn">
             <h2 class="text-3xl font-black mb-8">মেইন অপশনসমূহ</h2>
             <form method="POST" class="bg-white p-6 rounded-3xl shadow-sm border flex gap-4 mb-10">
                 <input name="name" placeholder="Option Name" class="flex-1 border p-4 rounded-xl outline-none" required>
@@ -642,7 +688,8 @@ def admin_settings():
             "name": request.form.get('name'), "logo": request.form.get('logo'), "whatsapp": request.form.get('whatsapp'),
             "fb": request.form.get('fb'), "pass": request.form.get('pass'), "dmca": request.form.get('dmca'),
             "copyright": request.form.get('copyright'), "footer_text": request.form.get('footer_text'),
-            "theme": request.form.get('theme'), "privacy": request.form.get('privacy'), "header_text": request.form.get('header_text')
+            "theme": request.form.get('theme'), "privacy": request.form.get('privacy'), "header_text": request.form.get('header_text'),
+            "tax_percent": request.form.get('tax_percent'), "delivery_msg": request.form.get('delivery_msg')
         }
         settings_col.update_one({"id": "config"}, {"$set": updated})
         return redirect('/admin/dash')
@@ -651,7 +698,7 @@ def admin_settings():
     <head>"""+HEAD+"""</head>
     <body class="p-8 bg-gray-50">
         <a href="/admin/dash" class="inline-block mb-6 bg-gray-200 px-6 py-2 rounded-xl font-bold">Back to Dash</a>
-        <form method="POST" class="max-w-4xl mx-auto bg-white p-10 rounded-[60px] shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8 border">
+        <form method="POST" class="max-w-4xl mx-auto bg-white p-10 rounded-[60px] shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8 border animate__animated animate__fadeIn">
             <h2 class="col-span-full text-4xl font-black mb-4">Settings</h2>
             
             <div class="flex flex-col gap-2">
@@ -662,6 +709,16 @@ def admin_settings():
             <div class="flex flex-col gap-2">
                 <label class="font-bold text-gray-600">Logo URL</label>
                 <input name="logo" value="{{ s.logo }}" placeholder="Logo URL" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">Tax (%)</label>
+                <input name="tax_percent" value="{{ s.tax_percent }}" placeholder="0" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">Delivery Charge Info (Text)</label>
+                <input name="delivery_msg" value="{{ s.delivery_msg }}" placeholder="Manual message" class="w-full border p-4 rounded-2xl outline-none">
             </div>
 
             <div class="flex flex-col gap-2">
