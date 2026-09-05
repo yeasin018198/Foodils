@@ -312,11 +312,11 @@ def cart_view():
         
         <div class="fixed bottom-0 left-0 right-0 p-6 bg-white border-t shadow-2xl animate__animated animate__fadeInUp">
             <div class="space-y-2 mb-4 text-sm font-bold text-gray-600">
-                <div class="flex justify-between"><span>Total Items:</span> <span id="subTotal">৳0</span></div>
-                <div class="flex justify-between"><span>Tax ({{ settings.tax_percent }}%):</span> <span id="taxAmount">৳0</span></div>
+                <div class="flex justify-between"><span>Total Items:</span> <span id="subTotal">SR0</span></div>
+                <div class="flex justify-between"><span>Tax ({{ settings.tax_percent }}%):</span> <span id="taxAmount">SR0</span></div>
                 <div class="flex justify-between text-{{ settings.theme }}-600 italic"><span>Delivery Charge:</span> <span>{{ settings.delivery_msg }}</span></div>
             </div>
-            <div class="flex justify-between text-xl font-black mb-4 border-t pt-2"><span>Total Bill:</span> <span id="totalPrice">৳0</span></div>
+            <div class="flex justify-between text-xl font-black mb-4 border-t pt-2"><span>Total Bill:</span> <span id="totalPrice">SR0</span></div>
             <button onclick="sendOrder()" class="w-full bg-green-500 text-white py-5 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl">
                 <i class="fab fa-whatsapp text-2xl"></i> Send your order and location on WhatsApp
             </button>
