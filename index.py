@@ -105,7 +105,7 @@ def home():
         <!-- Search Bar -->
         <div class="p-4 md:px-8">
             <div class="relative max-w-2xl mx-auto mt-4 animate__animated animate__zoomIn">
-                <input type="text" id="catSearch" onkeyup="searchCat()" placeholder="খুঁজুন আপনার পছন্দের খাবার ক্যাটাগরি..." class="w-full p-4 pl-12 rounded-2xl border-none shadow-md outline-none focus:ring-2 focus:ring-{{ settings.theme }}-500">
+                <input type="text" id="catSearch" onkeyup="searchCat()" placeholder="Find your favorite food ..." class="w-full p-4 pl-12 rounded-2xl border-none shadow-md outline-none focus:ring-2 focus:ring-{{ settings.theme }}-500">
                 <i class="fas fa-search absolute left-4 top-5 text-gray-400"></i>
             </div>
         </div>
