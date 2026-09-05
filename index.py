@@ -287,7 +287,7 @@ def food_details(id):
                 cart.push(item);
                 localStorage.setItem('my_cart', JSON.stringify(cart));
                 updateCartBadge();
-                alert('কার্টে যোগ করা হয়েছে!');
+                alert('Added to cart!');
                 window.location.href = "/category/{{ food.category }}";
             }
         </script>
@@ -306,7 +306,7 @@ def cart_view():
     <body class="bg-white pb-64">
         <nav class="glass sticky top-0 z-50 px-4 py-3 border-b flex items-center gap-4 animate__animated animate__fadeInDown">
             <a href="/" class="bg-gray-100 w-10 h-10 flex items-center justify-center rounded-full"><i class="fas fa-arrow-left"></i></a>
-            <h1 class="text-xl font-bold">আমার কার্ট</h1>
+            <h1 class="text-xl font-bold">My Cart</h1>
         </nav>
         <div id="cartList" class="p-4 space-y-4"></div>
         
@@ -316,7 +316,7 @@ def cart_view():
                 <div class="flex justify-between"><span>Tax ({{ settings.tax_percent }}%):</span> <span id="taxAmount">৳0</span></div>
                 <div class="flex justify-between text-{{ settings.theme }}-600 italic"><span>Delivery Charge:</span> <span>{{ settings.delivery_msg }}</span></div>
             </div>
-            <div class="flex justify-between text-xl font-black mb-4 border-t pt-2"><span>সর্বমোট বিল:</span> <span id="totalPrice">৳0</span></div>
+            <div class="flex justify-between text-xl font-black mb-4 border-t pt-2"><span>Total Bill:</span> <span id="totalPrice">৳0</span></div>
             <button onclick="sendOrder()" class="w-full bg-green-500 text-white py-5 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl">
                 <i class="fab fa-whatsapp text-2xl"></i> Send your order and location on WhatsApp
             </button>
