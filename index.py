@@ -189,7 +189,7 @@ def category_foods(name):
                 <img src="{{ food.image }}" class="rounded-xl object-cover w-full h-40 md:h-56">
                 <h4 class="text-sm md:text-xl font-bold mt-4 text-gray-800 truncate">{{ food.name }}</h4>
                 <div class="flex justify-between items-center mt-2">
-                    <span class="text-{{ settings.theme }}-600 font-black md:text-xl">৳{{ food.price }}</span>
+                    <span class="text-{{ settings.theme }}-600 font-black md:text-xl">SR{{ food.price }}</span>
                     <i class="fas fa-plus-circle text-orange-500"></i>
                 </div>
             </a>
