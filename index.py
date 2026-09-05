@@ -53,9 +53,8 @@ HEAD = """
     body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f4f6; color: #1f2937; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .food-card img { height: 160px; object-fit: cover; width: 100%; border-radius: 12px; }
-    @media (min-width: 768px) { .food-card img { height: 250px; } }
+    @media (min-width: 768px) { .food-card img { height: 220px; } }
     .category-icon { min-width: 80px; transition: transform 0.2s; }
-    @media (min-width: 768px) { .category-icon { min-width: 100px; } }
     .category-icon:hover { transform: scale(1.1); }
     .premium-shadow { box-shadow: 0 4px 20px -5px rgba(0,0,0,0.1); }
 </style>
@@ -69,7 +68,7 @@ def home():
     settings = get_site_settings()
     categories = list(cats_col.find())
     
-    # Slider logic: 3 items from each category
+    # Slider logic: 3 items from each category (Original Logic)
     slider_items = []
     for c in categories:
         items = list(foods_col.find({"category": c['name']}).limit(3))
@@ -84,13 +83,10 @@ def home():
     <body class="max-w-screen-2xl mx-auto">
         <!-- Header -->
         <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3 flex justify-between items-center border-b">
-            <div class="flex items-center gap-2 md:gap-4">
-                <img src="{{ settings.logo }}" class="w-10 h-10 md:w-16 md:h-16 rounded-full ring-2 ring-{{ settings.theme }}-500">
+            <div class="flex items-center gap-3">
+                <img src="{{ settings.logo }}" class="w-10 h-10 md:w-14 md:h-14 rounded-full ring-2 ring-{{ settings.theme }}-500">
                 <h1 class="text-xl md:text-3xl font-bold text-{{ settings.theme }}-600">{{ settings.name }}</h1>
             </div>
-            <a href="https://wa.me/{{ settings.whatsapp|replace('+', '')|replace(' ', '') }}" class="bg-green-500 text-white px-3 py-1.5 md:px-5 md:py-2 rounded-full text-xs md:text-sm font-bold flex items-center gap-2">
-                <i class="fab fa-whatsapp"></i> <span class="hidden md:inline">Contact</span>
-            </a>
         </nav>
 
         <!-- Category Horizontal Slider -->
@@ -105,7 +101,7 @@ def home():
             {% endfor %}
         </div>
 
-        <!-- Main Banner (Responsive Text) -->
+        <!-- Main Banner (Responsive) -->
         <div class="p-4">
             <div class="bg-{{ settings.theme }}-600 rounded-2xl md:rounded-[40px] p-6 md:p-16 text-white shadow-lg relative overflow-hidden">
                 <h2 class="text-xl md:text-5xl font-bold relative z-10 leading-tight">{{ settings.header_text }}</h2>
@@ -114,16 +110,16 @@ def home():
             </div>
         </div>
 
-        <!-- Featured Slider -->
+        <!-- Featured Slider (Original 3 items per category logic) -->
         <div class="p-4">
             <h2 class="text-lg md:text-2xl font-bold mb-4 flex items-center gap-2">
                 <span class="w-1.5 h-6 bg-{{ settings.theme }}-600 rounded-full"></span> Featured Foods
             </h2>
             <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                 {% for item in slider_items %}
-                <a href="/food/{{ item._id }}" class="min-w-[260px] md:min-w-[400px] bg-white rounded-2xl shadow-sm border overflow-hidden">
-                    <img src="{{ item.image }}" class="w-full h-40 md:h-64 object-cover">
-                    <div class="p-4 md:p-6">
+                <a href="/food/{{ item._id }}" class="min-w-[260px] md:min-w-[380px] bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <img src="{{ item.image }}" class="w-full h-40 md:h-60 object-cover">
+                    <div class="p-4">
                         <h3 class="font-bold text-gray-800 md:text-xl">{{ item.name }}</h3>
                         <div class="flex justify-between items-center mt-2">
                             <span class="text-{{ settings.theme }}-600 font-bold md:text-2xl">৳{{ item.price }}</span>
@@ -157,17 +153,18 @@ def home():
         </div>
 
         <!-- Footer -->
-        <footer class="bg-white border-t mt-12 p-8 md:p-20 text-center">
+        <footer class="bg-white border-t mt-12 p-8 md:p-16 text-center">
             <div class="flex justify-center items-center gap-3 mb-6">
                 <img src="{{ settings.logo }}" class="w-10 h-10 md:w-16 md:h-16 rounded-full">
                 <span class="font-bold text-xl md:text-3xl">{{ settings.name }}</span>
             </div>
-            <p class="text-gray-500 max-w-md mx-auto text-sm md:text-lg">{{ settings.footer_text }}</p>
-            <div class="flex justify-center gap-8 my-8 text-3xl">
+            <p class="text-gray-500 max-w-md mx-auto text-sm md:text-base">{{ settings.footer_text }}</p>
+            <div class="flex justify-center gap-8 my-8 text-2xl md:text-4xl">
                 <a href="{{ settings.fb }}" class="text-blue-600 hover:scale-110 transition-transform"><i class="fab fa-facebook"></i></a>
-                <a href="https://wa.me/{{ settings.whatsapp|replace('+', '')|replace(' ', '') }}" class="text-green-500 hover:scale-110 transition-transform"><i class="fab fa-whatsapp"></i></a>
+                {% set wa_clean = settings.whatsapp|replace(' ', '')|replace('+', '') %}
+                <a href="https://wa.me/{{ wa_clean }}" class="text-green-500 hover:scale-110 transition-transform"><i class="fab fa-whatsapp"></i></a>
             </div>
-            <div class="text-[10px] md:text-sm text-gray-400 border-t pt-8 space-y-2">
+            <div class="text-[10px] md:text-xs text-gray-400 border-t pt-6 space-y-1">
                 <p>{{ settings.dmca }}</p>
                 <p>{{ settings.copyright }}</p>
             </div>
@@ -181,9 +178,7 @@ def food_details(id):
     settings = get_site_settings()
     food = foods_col.find_one({"_id": ObjectId(id)})
     reviews = list(reviews_col.find({"food_id": id}).sort("_id", -1))
-    
-    # Clean WhatsApp number
-    clean_wa = settings['whatsapp'].replace('+', '').replace(' ', '')
+    wa_clean = settings['whatsapp'].replace(' ', '').replace('+', '')
     
     return render_template_string("""
     <!DOCTYPE html>
@@ -191,7 +186,7 @@ def food_details(id):
     <head>"""+HEAD+"""<title>{{ food.name }} - Details</title></head>
     <body class="bg-gray-50">
         <div class="max-w-5xl mx-auto bg-white min-h-screen shadow-sm">
-            <div class="relative h-[300px] md:h-[550px]">
+            <div class="relative h-[300px] md:h-[500px]">
                 <img src="{{ food.image }}" class="w-full h-full object-cover">
                 <a href="/" class="absolute top-4 left-4 bg-white/70 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center text-gray-800 shadow-lg">
                     <i class="fas fa-arrow-left"></i>
@@ -199,43 +194,44 @@ def food_details(id):
             </div>
             
             <div class="p-6 md:p-12 -mt-10 bg-white rounded-t-[32px] md:rounded-t-[50px] relative z-10">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
-                        <span class="bg-{{ settings.theme }}-100 text-{{ settings.theme }}-600 px-3 py-1 rounded-full text-xs font-bold uppercase">{{ food.category }}</span>
+                        <span class="bg-{{ settings.theme }}-100 text-{{ settings.theme }}-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">{{ food.category }}</span>
                         <h1 class="text-2xl md:text-5xl font-bold mt-2 text-gray-900">{{ food.name }}</h1>
                     </div>
                     <div class="bg-gray-50 p-4 rounded-2xl border">
                         <p class="text-2xl md:text-4xl font-bold text-{{ settings.theme }}-600">৳{{ food.price }}</p>
+                        <p class="text-[10px] text-gray-400 font-medium">Per Plate/Unit</p>
                     </div>
                 </div>
 
-                <!-- Gallery -->
+                <!-- Gallery Grid -->
                 <div class="grid grid-cols-4 md:grid-cols-6 gap-3 mb-10">
                     {% for ss in food.screenshots %}
                     <img src="{{ ss }}" class="w-full aspect-square rounded-xl object-cover border-2 border-gray-100">
                     {% endfor %}
                 </div>
 
-                <!-- Details -->
-                <div class="bg-gray-50 rounded-3xl p-6 md:p-10 border border-gray-100">
+                <!-- Info Box -->
+                <div class="bg-gray-50 rounded-2xl md:rounded-3xl p-6 md:p-10 border border-gray-100">
                     <h4 class="font-bold text-gray-800 border-b pb-4 mb-4 flex items-center gap-2 md:text-xl">
                         <i class="fas fa-list-ul text-{{ settings.theme }}-500"></i> Description & Details
                     </h4>
                     <p class="text-gray-600 leading-relaxed whitespace-pre-line text-sm md:text-lg">{{ food.details }}</p>
                 </div>
 
-                <!-- WhatsApp Order (Fixed) -->
-                <a href="https://wa.me/{{ clean_wa }}?text=New Order Request!%0A---%0AItem: {{ food.name }}%0APrice: {{ food.price }}%0ACategory: {{ food.category }}%0AImage: {{ food.image }}" 
+                <!-- Order Button (WhatsApp Link Logic Fixed) -->
+                <a href="https://wa.me/{{ wa_clean }}?text=New Order Request!%0A---%0AItem: {{ food.name }}%0APrice: {{ food.price }}%0ACategory: {{ food.category }}%0AImage: {{ food.image }}" 
                    class="flex items-center justify-center gap-3 mt-10 bg-green-500 text-white py-4 md:py-6 rounded-2xl font-bold text-lg md:text-2xl shadow-xl hover:bg-green-600 transition-all active:scale-95">
                    <i class="fab fa-whatsapp text-2xl md:text-4xl"></i> Order Now via WhatsApp
                 </a>
 
-                <!-- Reviews -->
-                <div class="mt-16 border-t pt-10">
-                    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-8">Customer Reviews ({{ reviews|length }})</h3>
+                <!-- Reviews Section -->
+                <div class="mt-12 border-t pt-10">
+                    <h3 class="text-xl md:text-2xl font-bold text-gray-900 mb-6">Customer Reviews ({{ reviews|length }})</h3>
                     
-                    <form action="/review/{{ food._id }}" method="POST" class="bg-gray-50 p-6 rounded-2xl space-y-4 mb-10">
-                        <select name="stars" class="w-full bg-white border p-4 rounded-xl outline-none focus:ring-2 focus:ring-{{ settings.theme }}-500">
+                    <form action="/review/{{ food._id }}" method="POST" class="bg-gray-50 p-6 rounded-2xl space-y-4 mb-8 border">
+                        <select name="stars" class="w-full bg-white border p-3 rounded-xl outline-none focus:ring-2 focus:ring-{{ settings.theme }}-500">
                             <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
                             <option value="4">⭐⭐⭐⭐ Good</option>
                             <option value="3">⭐⭐⭐ Average</option>
@@ -243,7 +239,7 @@ def food_details(id):
                             <option value="1">⭐ Very Bad</option>
                         </select>
                         <textarea name="comment" placeholder="Tell others about the taste..." class="w-full bg-white border p-4 rounded-xl h-24 outline-none focus:ring-2 focus:ring-{{ settings.theme }}-500" required></textarea>
-                        <button class="w-full bg-{{ settings.theme }}-600 text-white py-4 rounded-xl font-bold md:text-lg">Post Review</button>
+                        <button class="w-full bg-{{ settings.theme }}-600 text-white py-3 rounded-xl font-bold md:text-lg">Post Review</button>
                     </form>
 
                     <div class="space-y-4">
@@ -261,7 +257,7 @@ def food_details(id):
         </div>
     </body>
     </html>
-    """, food=food, settings=settings, reviews=reviews, clean_wa=clean_wa)
+    """, food=food, settings=settings, reviews=reviews, wa_clean=wa_clean)
 
 @app.route('/review/<id>', methods=['POST'])
 def post_review(id):
@@ -279,11 +275,11 @@ def post_review(id):
 def admin_dash():
     if not session.get('admin_logged'): return render_template_string("""
         <head>"""+HEAD+"""</head>
-        <div class="max-w-md mx-auto mt-20 p-8 bg-white shadow-2xl rounded-3xl border text-center">
+        <div class="max-w-md mx-auto mt-20 p-8 bg-white shadow-2xl rounded-[40px] border text-center">
             <h2 class="text-2xl font-bold mb-6">Admin Login</h2>
             <form action="/admin/login" method="POST" class="space-y-4">
                 <input type="password" name="pass" placeholder="Enter Password" class="w-full border p-4 rounded-2xl text-center outline-none focus:ring-2 focus:ring-black">
-                <button class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold">Login</button>
+                <button class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold">Login to Panel</button>
             </form>
         </div>
     """)
@@ -302,44 +298,49 @@ def admin_dash():
     <body class="flex flex-col lg:flex-row min-h-screen bg-gray-50">
         <!-- Sidebar (Responsive) -->
         <div class="w-full lg:w-72 bg-gray-900 text-white p-6 md:p-10">
-            <h2 class="text-2xl font-bold mb-10 flex items-center gap-2"><img src="{{ settings.logo }}" class="w-8 h-8 rounded-full"> Panel</h2>
-            <nav class="space-y-2 font-medium flex flex-row lg:flex-column flex-wrap gap-2 lg:gap-0">
-                <a href="/admin/dash" class="flex-1 lg:flex-none flex items-center gap-3 p-4 bg-{{ settings.theme }}-600 rounded-xl"><i class="fas fa-home"></i> Dash</a>
-                <a href="/admin/add-food" class="flex-1 lg:flex-none flex items-center gap-3 p-4 hover:bg-gray-800 rounded-xl"><i class="fas fa-plus"></i> Food</a>
-                <a href="/admin/add-cat" class="flex-1 lg:flex-none flex items-center gap-3 p-4 hover:bg-gray-800 rounded-xl"><i class="fas fa-tags"></i> Category</a>
-                <a href="/admin/settings" class="flex-1 lg:flex-none flex items-center gap-3 p-4 hover:bg-gray-800 rounded-xl"><i class="fas fa-cog"></i> Settings</a>
-                <a href="/admin/logout" class="flex-1 lg:flex-none flex items-center gap-3 p-4 text-red-400"><i class="fas fa-power-off"></i> Logout</a>
+            <div class="flex items-center gap-3 mb-10">
+                <img src="{{ settings.logo }}" class="w-10 h-10 rounded-lg">
+                <h2 class="text-xl font-bold">Control Panel</h2>
+            </div>
+            <nav class="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 font-medium">
+                <a href="/admin/dash" class="flex-shrink-0 flex items-center gap-3 p-4 bg-{{ settings.theme }}-600 rounded-xl"><i class="fas fa-th-large"></i> Dash</a>
+                <a href="/admin/add-food" class="flex-shrink-0 flex items-center gap-3 p-4 hover:bg-gray-800 rounded-xl"><i class="fas fa-plus-circle"></i> Food</a>
+                <a href="/admin/add-cat" class="flex-shrink-0 flex items-center gap-3 p-4 hover:bg-gray-800 rounded-xl"><i class="fas fa-tags"></i> Category</a>
+                <a href="/admin/settings" class="flex-shrink-0 flex items-center gap-3 p-4 hover:bg-gray-800 rounded-xl"><i class="fas fa-cogs"></i> Settings</a>
+                <a href="/admin/logout" class="flex-shrink-0 flex items-center gap-3 p-4 text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </nav>
         </div>
 
-        <div class="flex-1 p-6 md:p-12">
-            <h1 class="text-3xl font-bold mb-10 text-gray-800">Dashboard Overview</h1>
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white p-6 rounded-3xl border-t-4 border-blue-500 shadow-sm text-center">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Total Views</p>
-                    <h3 class="text-3xl font-black mt-2">{{ total_views }}</h3>
+        <!-- Main Content -->
+        <div class="flex-1 p-6 md:p-12 overflow-y-auto">
+            <h1 class="text-3xl font-bold mb-10 text-gray-800">Overview</h1>
+            
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-t-4 border-blue-500">
+                    <p class="text-gray-400 text-xs font-bold uppercase">Total Views</p>
+                    <h3 class="text-2xl md:text-3xl font-black mt-1">{{ total_views }}</h3>
                 </div>
-                <div class="bg-white p-6 rounded-3xl border-t-4 border-green-500 shadow-sm text-center">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Today</p>
-                    <h3 class="text-3xl font-black mt-2 text-green-600">{{ today_views }}</h3>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-t-4 border-green-500">
+                    <p class="text-gray-400 text-xs font-bold uppercase">Today</p>
+                    <h3 class="text-2xl md:text-3xl font-black mt-1 text-green-600">{{ today_views }}</h3>
                 </div>
-                <div class="bg-white p-6 rounded-3xl border-t-4 border-orange-500 shadow-sm text-center">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Foods</p>
-                    <h3 class="text-3xl font-black mt-2 text-orange-500">{{ total_foods }}</h3>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-t-4 border-orange-500">
+                    <p class="text-gray-400 text-xs font-bold uppercase">Foods</p>
+                    <h3 class="text-2xl md:text-3xl font-black mt-1 text-orange-500">{{ total_foods }}</h3>
                 </div>
-                <div class="bg-white p-6 rounded-3xl border-t-4 border-purple-500 shadow-sm text-center">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Cats</p>
-                    <h3 class="text-3xl font-black mt-2 text-purple-600">{{ total_cats }}</h3>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-t-4 border-purple-500">
+                    <p class="text-gray-400 text-xs font-bold uppercase">Cats</p>
+                    <h3 class="text-2xl md:text-3xl font-black mt-1 text-purple-600">{{ total_cats }}</h3>
                 </div>
             </div>
 
             <div class="mt-12 bg-white p-8 rounded-3xl shadow-sm border">
-                <h3 class="text-xl font-bold mb-6">Latest Comments</h3>
+                <h3 class="text-xl font-bold mb-6">Recent Customer Feedback</h3>
                 <div class="space-y-4">
                     {% for c in comments %}
-                    <div class="p-4 bg-gray-50 rounded-2xl border flex justify-between items-center">
-                        <p class="text-gray-600 italic">"{{ c.comment }}"</p>
-                        <span class="font-bold text-yellow-600">{{ c.stars }} ⭐</span>
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                        <p class="text-gray-600 text-sm italic">"{{ c.comment }}"</p>
+                        <span class="text-[10px] font-bold bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full">{{ c.stars }} ⭐</span>
                     </div>
                     {% endfor %}
                 </div>
@@ -382,17 +383,19 @@ def admin_add_food():
     <head>"""+HEAD+"""</head>
     <body class="p-6 bg-gray-50">
         <div class="max-w-3xl mx-auto">
-            <h2 class="text-2xl font-bold mb-8">Add New Food</h2>
-            <form method="POST" class="bg-white p-8 rounded-3xl shadow-sm border space-y-5">
-                <input name="name" placeholder="Food Name" class="w-full border p-4 rounded-2xl outline-none" required>
-                <input name="price" placeholder="Price (৳)" class="w-full border p-4 rounded-2xl outline-none" required>
+            <h2 class="text-2xl md:text-3xl font-bold mb-8">Add New Food</h2>
+            <form method="POST" class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border space-y-5">
+                <div class="grid md:grid-cols-2 gap-5">
+                    <input name="name" placeholder="Food Name" class="w-full border p-4 rounded-2xl outline-none" required>
+                    <input name="price" placeholder="Price (৳)" class="w-full border p-4 rounded-2xl outline-none" required>
+                </div>
                 <input name="image" placeholder="Main Image URL" class="w-full border p-4 rounded-2xl outline-none" required>
                 <select name="category" class="w-full border p-4 rounded-2xl outline-none">
                     {% for cat in categories %} <option value="{{ cat.name }}">{{ cat.name }}</option> {% endfor %}
                 </select>
                 <textarea name="screenshots" placeholder="Other Screenshot URLs (separated by comma)" class="w-full border p-4 rounded-2xl h-24 outline-none"></textarea>
                 <textarea name="details" placeholder="Write full food details..." class="w-full border p-4 rounded-2xl h-40 outline-none" required></textarea>
-                <button class="w-full bg-orange-600 text-white py-5 rounded-2xl font-bold">Add Now</button>
+                <button class="w-full bg-orange-600 text-white py-5 rounded-2xl font-bold text-lg shadow-lg">Save & Publish</button>
             </form>
         </div>
     </body>
@@ -407,21 +410,24 @@ def admin_add_cat():
     categories = list(cats_col.find())
     return render_template_string("""
     <head>"""+HEAD+"""</head>
-    <body class="p-6 bg-gray-100">
+    <body class="p-6 bg-gray-100 min-h-screen">
         <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
-            <form method="POST" class="bg-white p-8 rounded-3xl shadow-sm h-fit">
-                <h3 class="text-xl font-bold mb-6">Add Category</h3>
+            <form method="POST" class="bg-white p-8 rounded-[32px] shadow-sm h-fit border">
+                <h3 class="text-xl font-bold mb-6">Create Category</h3>
                 <input name="name" placeholder="Category Name" class="w-full border p-4 rounded-2xl mb-4 outline-none" required>
                 <input name="logo" placeholder="Logo URL" class="w-full border p-4 rounded-2xl mb-6 outline-none" required>
-                <button class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold">Add Category</button>
+                <button class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold">Add Now</button>
             </form>
-            <div class="bg-white p-8 rounded-3xl shadow-sm">
+            <div class="bg-white p-8 rounded-[32px] shadow-sm border">
                 <h3 class="text-xl font-bold mb-6">All Categories</h3>
                 <div class="space-y-4">
                     {% for cat in categories %}
                     <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border">
-                        <span class="font-bold">{{ cat.name }}</span>
-                        <a href="/admin/del-cat/{{ cat._id }}" class="text-red-500"><i class="fas fa-trash"></i></a>
+                        <div class="flex items-center gap-4">
+                            <img src="{{ cat.logo }}" class="w-12 h-12 rounded-full object-cover">
+                            <span class="font-bold text-gray-700">{{ cat.name }}</span>
+                        </div>
+                        <a href="/admin/del-cat/{{ cat._id }}" class="text-red-500 bg-red-50 w-10 h-10 flex items-center justify-center rounded-full"><i class="fas fa-trash-alt"></i></a>
                     </div>
                     {% endfor %}
                 </div>
@@ -451,32 +457,41 @@ def admin_settings():
             "copyright": request.form.get('copyright'),
             "footer_text": request.form.get('footer_text'),
             "theme": request.form.get('theme'),
-            "privacy": request.form.get('privacy')
+            "privacy": request.form.get('privacy'),
+            "header_text": request.form.get('header_text')
         }
         settings_col.update_one({"id": "config"}, {"$set": updated})
         return redirect('/admin/dash')
 
     return render_template_string("""
     <head>"""+HEAD+"""</head>
-    <body class="p-6 bg-gray-50">
-        <form method="POST" class="max-w-4xl mx-auto bg-white p-8 md:p-12 rounded-[40px] shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 border">
-            <h2 class="col-span-full text-2xl font-bold mb-4">Settings</h2>
-            <input name="name" value="{{ s.name }}" placeholder="Site Name" class="w-full border p-4 rounded-2xl outline-none">
-            <input name="logo" value="{{ s.logo }}" placeholder="Logo URL" class="w-full border p-4 rounded-2xl outline-none">
-            <input name="whatsapp" value="{{ s.whatsapp }}" placeholder="WhatsApp (e.g. 88017...)" class="w-full border p-4 rounded-2xl outline-none">
-            <input name="fb" value="{{ s.fb }}" placeholder="FB Link" class="w-full border p-4 rounded-2xl outline-none">
-            <input name="pass" value="{{ s.pass }}" placeholder="Admin Pass" class="w-full border p-4 rounded-2xl outline-none">
-            <select name="theme" class="w-full border p-4 rounded-2xl outline-none">
-                <option value="orange" {% if s.theme=='orange' %}selected{% endif %}>Orange</option>
-                <option value="blue" {% if s.theme=='blue' %}selected{% endif %}>Blue</option>
-                <option value="green" {% if s.theme=='green' %}selected{% endif %}>Green</option>
-                <option value="red" {% if s.theme=='red' %}selected{% endif %}>Red</option>
-            </select>
-            <input name="footer_text" value="{{ s.footer_text }}" placeholder="Footer Text" class="col-span-full border p-4 rounded-2xl outline-none">
-            <textarea name="privacy" placeholder="Privacy Policy Content" class="col-span-full border p-4 rounded-2xl h-32 outline-none">{{ s.privacy }}</textarea>
-            <input name="dmca" value="{{ s.dmca }}" placeholder="DMCA Text" class="w-full border p-4 rounded-2xl outline-none">
-            <input name="copyright" value="{{ s.copyright }}" placeholder="Copyright Text" class="w-full border p-4 rounded-2xl outline-none">
-            <button class="col-span-full bg-gray-900 text-white py-5 rounded-2xl font-bold text-xl mt-4">Save Changes</button>
+    <body class="p-4 md:p-10 bg-gray-50">
+        <form method="POST" class="max-w-4xl mx-auto bg-white p-6 md:p-10 rounded-[40px] shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 border">
+            <h2 class="col-span-full text-2xl font-bold mb-4">Site Settings</h2>
+            
+            <div class="space-y-1"><label class="text-xs font-bold text-gray-400 px-2">SITE NAME</label><input name="name" value="{{ s.name }}" class="w-full border p-4 rounded-2xl outline-none"></div>
+            <div class="space-y-1"><label class="text-xs font-bold text-gray-400 px-2">LOGO URL</label><input name="logo" value="{{ s.logo }}" class="w-full border p-4 rounded-2xl outline-none"></div>
+            <div class="space-y-1"><label class="text-xs font-bold text-gray-400 px-2">WHATSAPP</label><input name="whatsapp" value="{{ s.whatsapp }}" class="w-full border p-4 rounded-2xl outline-none"></div>
+            <div class="space-y-1"><label class="text-xs font-bold text-gray-400 px-2">FACEBOOK</label><input name="fb" value="{{ s.fb }}" class="w-full border p-4 rounded-2xl outline-none"></div>
+            <div class="space-y-1"><label class="text-xs font-bold text-gray-400 px-2">ADMIN PASS</label><input name="pass" value="{{ s.pass }}" class="w-full border p-4 rounded-2xl outline-none"></div>
+            
+            <div class="space-y-1"><label class="text-xs font-bold text-gray-400 px-2">THEME COLOR</label>
+                <select name="theme" class="w-full border p-4 rounded-2xl outline-none">
+                    <option value="orange" {% if s.theme=='orange' %}selected{% endif %}>Orange</option>
+                    <option value="blue" {% if s.theme=='blue' %}selected{% endif %}>Blue</option>
+                    <option value="green" {% if s.theme=='green' %}selected{% endif %}>Green</option>
+                    <option value="red" {% if s.theme=='red' %}selected{% endif %}>Red</option>
+                </select>
+            </div>
+
+            <div class="col-span-full space-y-1"><label class="text-xs font-bold text-gray-400 px-2">HEADER TEXT</label><input name="header_text" value="{{ s.header_text }}" class="w-full border p-4 rounded-2xl outline-none"></div>
+            <div class="col-span-full space-y-1"><label class="text-xs font-bold text-gray-400 px-2">FOOTER TEXT</label><input name="footer_text" value="{{ s.footer_text }}" class="w-full border p-4 rounded-2xl outline-none"></div>
+            <div class="col-span-full space-y-1"><label class="text-xs font-bold text-gray-400 px-2">PRIVACY POLICY</label><textarea name="privacy" class="w-full border p-4 rounded-2xl h-32 outline-none">{{ s.privacy }}</textarea></div>
+            
+            <div class="space-y-1"><label class="text-xs font-bold text-gray-400 px-2">DMCA</label><input name="dmca" value="{{ s.dmca }}" class="w-full border p-4 rounded-2xl outline-none"></div>
+            <div class="space-y-1"><label class="text-xs font-bold text-gray-400 px-2">COPYRIGHT</label><input name="copyright" value="{{ s.copyright }}" class="w-full border p-4 rounded-2xl outline-none"></div>
+            
+            <button class="col-span-full bg-gray-900 text-white py-5 rounded-2xl font-bold text-xl mt-4">Apply Changes</button>
         </form>
     </body>
     """, s=settings)
