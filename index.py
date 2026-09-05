@@ -41,17 +41,13 @@ def track_view():
     if not existing:
         views_col.insert_one({"ip": ip, "time": now, "date": now.strftime("%Y-%m-%d")})
 
-# --- CSS / Theme mapping (30 Themes) ---
+# --- CSS / Theme mapping ---
 THEME_COLORS = {
-    "orange": "orange-500", "blue": "blue-600", "red": "red-600", "green": "green-600", 
-    "indigo": "indigo-600", "pink": "pink-500", "purple": "purple-600", "teal": "teal-500",
-    "cyan": "cyan-500", "yellow": "yellow-500", "slate": "slate-800", "rose": "rose-500",
-    "emerald": "emerald-600", "sky": "sky-500", "violet": "violet-600", "fuchsia": "fuchsia-600"
-    # ... adds up to 30 choices in the UI
+    "orange": "#f97316", "blue": "#2563eb", "red": "#dc2626", "green": "#16a34a", 
+    "indigo": "#4f46e5", "pink": "#db2777", "purple": "#9333ea", "teal": "#0d9488"
 }
 
-# --- TEMPLATES ---
-
+# --- PREMIUM UI ASSETS ---
 HEAD = """
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,10 +55,13 @@ HEAD = """
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;500;700&display=swap');
-    body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fdfdfd; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
-    .active-theme { background-color: {{ theme_hex }}; }
+    .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+    .premium-card { transition: all 0.3s ease; border: 1px solid #f1f5f9; }
+    .premium-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+    .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 </style>
 """
 
@@ -74,7 +73,6 @@ def home():
     settings = get_site_settings()
     categories = list(cats_col.find())
     
-    # Slider logic: 3 items from each category
     slider_items = []
     for c in categories:
         items = list(foods_col.find({"category": c['name']}).limit(3))
@@ -85,66 +83,109 @@ def home():
     return render_template_string("""
     <!DOCTYPE html>
     <html>
-    <head>"""+HEAD+"""<title>{{ settings.name }}</title></head>
-    <body>
+    <head>"""+HEAD+"""<title>{{ settings.name }} - Premium Food</title></head>
+    <body class="text-slate-800">
         <!-- Header -->
-        <nav class="bg-white shadow-md sticky top-0 z-50 p-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <img src="{{ settings.logo }}" class="w-10 h-10 rounded-full shadow-sm">
-                <h1 class="text-xl font-bold text-{{ settings.theme }}-600">{{ settings.name }}</h1>
+        <nav class="glass sticky top-0 z-50 px-5 py-4 flex justify-between items-center border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <img src="{{ settings.logo }}" class="w-11 h-11 rounded-2xl shadow-lg ring-2 ring-{{ settings.theme }}-500/20">
+                <div>
+                    <h1 class="text-xl font-extrabold text-slate-900 leading-tight">{{ settings.name }}</h1>
+                    <p class="text-[10px] text-{{ settings.theme }}-600 font-bold uppercase tracking-widest">Premium Service</p>
+                </div>
             </div>
-            <a href="/admin/dash" class="text-gray-400"><i class="fas fa-user-lock"></i></a>
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
         </nav>
 
-        <!-- Category Slider (Circle Icons) -->
-        <div class="p-4 flex gap-4 overflow-x-auto no-scrollbar bg-white">
-            {% for cat in categories %}
-            <a href="/category/{{ cat.name }}" class="flex flex-col items-center min-w-[80px] animate__animated animate__fadeIn">
-                <div class="w-14 h-14 rounded-full border-2 border-{{ settings.theme }}-500 p-1">
-                    <img src="{{ cat.logo }}" class="w-full h-full rounded-full object-cover">
+        <!-- Welcome Banner -->
+        <div class="p-5">
+            <div class="bg-{{ settings.theme }}-600 rounded-3xl p-6 text-white relative overflow-hidden shadow-2xl shadow-{{ settings.theme }}-500/30">
+                <div class="relative z-10">
+                    <h2 class="text-2xl font-bold italic">{{ settings.header_text }}</h2>
+                    <p class="text-white/80 mt-1 text-sm">Delicious meals delivered to your doorstep.</p>
                 </div>
-                <span class="text-xs mt-1 font-bold">{{ cat.name }}</span>
+                <i class="fas fa-utensils absolute -right-4 -bottom-4 text-7xl text-white/10 rotate-12"></i>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="px-5 mb-2 flex justify-between items-center">
+            <h3 class="font-bold text-lg">Categories</h3>
+            <span class="text-xs text-{{ settings.theme }}-600 font-bold">View All</span>
+        </div>
+        <div class="flex gap-5 overflow-x-auto no-scrollbar px-5 py-2">
+            {% for cat in categories %}
+            <a href="/category/{{ cat.name }}" class="flex flex-col items-center min-w-[70px] group">
+                <div class="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center mb-2 group-hover:bg-{{ settings.theme }}-500 transition-all border border-gray-100 ring-2 ring-transparent group-hover:ring-{{ settings.theme }}-500/30">
+                    <img src="{{ cat.logo }}" class="w-12 h-12 rounded-xl object-cover">
+                </div>
+                <span class="text-[11px] font-bold text-slate-600">{{ cat.name }}</span>
             </a>
             {% endfor %}
         </div>
 
-        <!-- Hero Slider -->
-        <div class="p-4">
-            <h2 class="text-lg font-bold mb-3">Featured Food</h2>
-            <div class="flex gap-4 overflow-x-auto no-scrollbar">
+        <!-- Hero Slider (Featured) -->
+        <div class="p-5">
+            <h2 class="text-xl font-extrabold mb-4 flex items-center gap-2">
+                <span class="w-2 h-6 bg-{{ settings.theme }}-500 rounded-full"></span> Featured Delights
+            </h2>
+            <div class="flex gap-5 overflow-x-auto no-scrollbar pb-4">
                 {% for item in slider_items %}
-                <a href="/food/{{ item._id }}" class="min-w-[280px] bg-white rounded-2xl shadow-lg overflow-hidden relative border">
-                    <img src="{{ item.image }}" class="w-full h-40 object-cover">
-                    <div class="p-3">
-                        <h3 class="font-bold">{{ item.name }}</h3>
-                        <p class="text-{{ settings.theme }}-600 font-bold">৳{{ item.price }}</p>
+                <a href="/food/{{ item._id }}" class="min-w-[280px] bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 overflow-hidden relative border border-slate-100">
+                    <div class="relative">
+                        <img src="{{ item.image }}" class="w-full h-44 object-cover">
+                        <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                            ⭐ 4.8
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-lg text-slate-800">{{ item.name }}</h3>
+                        <div class="flex justify-between items-center mt-3">
+                            <p class="text-2xl font-black text-{{ settings.theme }}-600">৳{{ item.price }}</p>
+                            <span class="bg-{{ settings.theme }}-50 text-{{ settings.theme }}-600 p-2 rounded-xl"><i class="fas fa-plus"></i></span>
+                        </div>
                     </div>
                 </a>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- All Food Grid -->
-        <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {% for food in all_foods %}
-            <a href="/food/{{ food._id }}" class="bg-white rounded-xl shadow p-2 animate__animated animate__fadeInUp border">
-                <img src="{{ food.image }}" class="w-full h-32 object-cover rounded-lg">
-                <h4 class="text-sm font-bold mt-2 truncate">{{ food.name }}</h4>
-                <div class="flex justify-between items-center mt-1">
-                    <span class="text-{{ settings.theme }}-600 font-bold text-sm">৳{{ food.price }}</span>
-                    <span class="text-[9px] bg-gray-100 px-2 py-1 rounded text-gray-500 uppercase">{{ food.category }}</span>
-                </div>
-            </a>
-            {% endfor %}
+        <!-- Food Grid -->
+        <div class="px-5 mb-20">
+            <h2 class="text-xl font-extrabold mb-4 flex items-center gap-2">
+                <span class="w-2 h-6 bg-slate-800 rounded-full"></span> Explore Menu
+            </h2>
+            <div class="grid grid-cols-2 gap-4">
+                {% for food in all_foods %}
+                <a href="/food/{{ food._id }}" class="premium-card bg-white rounded-3xl p-3 animate__animated animate__fadeInUp">
+                    <img src="{{ food.image }}" class="w-full h-36 object-cover rounded-2xl mb-3 shadow-inner">
+                    <h4 class="text-sm font-bold text-slate-800 truncate px-1">{{ food.name }}</h4>
+                    <div class="flex justify-between items-center mt-2 px-1">
+                        <span class="text-{{ settings.theme }}-600 font-extrabold">৳{{ food.price }}</span>
+                        <span class="text-[8px] bg-slate-100 px-2 py-1 rounded-lg text-slate-500 font-bold uppercase tracking-tighter">{{ food.category }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
         </div>
 
-        <footer class="bg-white border-t mt-10 p-10 text-center">
-            <p class="font-bold text-gray-700">{{ settings.footer_text }}</p>
-            <div class="flex justify-center gap-6 my-4 text-2xl">
-                <a href="{{ settings.fb }}" class="text-blue-600"><i class="fab fa-facebook"></i></a>
-                <a href="https://wa.me/{{ settings.whatsapp }}" class="text-green-500"><i class="fab fa-whatsapp"></i></a>
+        <!-- Premium Footer -->
+        <footer class="bg-slate-900 text-white rounded-t-[3rem] p-10 text-center">
+            <img src="{{ settings.logo }}" class="w-16 h-16 rounded-2xl mx-auto mb-4 border-2 border-white/20">
+            <h2 class="text-2xl font-bold mb-2">{{ settings.name }}</h2>
+            <p class="text-slate-400 text-sm mb-6">{{ settings.footer_text }}</p>
+            <div class="flex justify-center gap-5 mb-8">
+                <a href="{{ settings.fb }}" class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-xl hover:bg-{{ settings.theme }}-600 transition-all"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://wa.me/{{ settings.whatsapp }}" class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-xl hover:bg-green-500 transition-all"><i class="fab fa-whatsapp"></i></a>
             </div>
-            <p class="text-xs text-gray-400">{{ settings.dmca }} | {{ settings.copyright }}</p>
+            <div class="border-t border-white/5 pt-8">
+                <p class="text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-2">{{ settings.dmca }}</p>
+                <p class="text-xs text-slate-500">{{ settings.copyright }}</p>
+            </div>
         </footer>
     </body>
     </html>
@@ -159,56 +200,71 @@ def food_details(id):
     return render_template_string("""
     <!DOCTYPE html>
     <html>
-    <head>"""+HEAD+"""<title>{{ food.name }}</title></head>
-    <body class="bg-gray-50">
-        <div class="max-w-2xl mx-auto bg-white min-h-screen shadow-lg">
-            <div class="relative">
-                <img src="{{ food.image }}" class="w-full h-72 object-cover">
-                <a href="/" class="absolute top-4 left-4 bg-white/50 p-2 rounded-full backdrop-blur-md"><i class="fas fa-arrow-left"></i></a>
+    <head>"""+HEAD+"""<title>{{ food.name }} - Details</title></head>
+    <body class="bg-white">
+        <div class="max-w-md mx-auto min-h-screen relative pb-20">
+            <!-- Top Nav -->
+            <div class="absolute top-6 left-6 z-10">
+                <a href="/" class="w-10 h-10 glass rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-chevron-left"></i></a>
             </div>
             
-            <div class="p-6">
-                <!-- Screenshots Grid -->
-                <div class="flex gap-2 overflow-x-auto no-scrollbar mb-4">
-                    {% for ss in food.screenshots %}
-                    <img src="{{ ss }}" class="w-24 h-24 rounded-lg object-cover border shadow-sm">
-                    {% endfor %}
+            <img src="{{ food.image }}" class="w-full h-[400px] object-cover rounded-b-[3rem] shadow-2xl">
+            
+            <div class="px-6 -mt-10 relative z-20">
+                <div class="bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-50">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-{{ settings.theme }}-600 text-xs font-black uppercase tracking-widest bg-{{ settings.theme }}-50 px-3 py-1 rounded-full">{{ food.category }}</span>
+                            <h1 class="text-3xl font-extrabold text-slate-900 mt-2">{{ food.name }}</h1>
+                        </div>
+                        <p class="text-2xl font-black text-slate-900">৳{{ food.price }}</p>
+                    </div>
+
+                    <!-- Gallery -->
+                    <div class="flex gap-3 overflow-x-auto no-scrollbar my-6">
+                        {% for ss in food.screenshots %}
+                        <img src="{{ ss }}" class="w-20 h-20 rounded-2xl object-cover ring-2 ring-slate-100">
+                        {% endfor %}
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-info-circle text-{{ settings.theme }}-500"></i> Description</h4>
+                        <p class="text-slate-500 leading-relaxed text-sm">{{ food.details }}</p>
+                    </div>
+
+                    <a href="https://wa.me/{{ settings.whatsapp }}?text=New Order Request!%0A---%0AItem: {{ food.name }}%0APrice: {{ food.price }}" 
+                       class="flex items-center justify-center gap-3 mt-8 bg-green-500 text-white py-5 rounded-3xl font-bold text-lg shadow-xl shadow-green-200 hover:bg-green-600 transition-all">
+                       <i class="fab fa-whatsapp text-2xl"></i> Confirm Order
+                    </a>
                 </div>
 
-                <h1 class="text-3xl font-bold">{{ food.name }}</h1>
-                <p class="text-2xl text-{{ settings.theme }}-600 font-bold mt-2">৳{{ food.price }}</p>
-                <div class="mt-4 p-4 bg-gray-50 rounded-xl border">
-                    <h4 class="font-bold border-b pb-2 mb-2">Item Details:</h4>
-                    <p class="text-gray-600 whitespace-pre-line">{{ food.details }}</p>
-                </div>
-
-                <a href="https://wa.me/{{ settings.whatsapp }}?text=New Order Request!%0A---%0AItem: {{ food.name }}%0APrice: {{ food.price }}%0ACategory: {{ food.category }}%0AImage: {{ food.image }}" 
-                   class="block mt-8 bg-green-500 text-white text-center py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-green-600">
-                   <i class="fab fa-whatsapp"></i> Order Now via WhatsApp
-                </a>
-
-                <!-- Reviews -->
-                <div class="mt-10 border-t pt-6">
-                    <h3 class="text-xl font-bold">Reviews ({{ reviews|length }})</h3>
-                    <form action="/review/{{ food._id }}" method="POST" class="mt-4 space-y-3">
-                        <select name="stars" class="w-full border p-3 rounded-xl">
-                            <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
-                            <option value="4">⭐⭐⭐⭐ 4 Stars</option>
-                            <option value="3">⭐⭐⭐ 3 Stars</option>
-                            <option value="2">⭐⭐ 2 Stars</option>
-                            <option value="1">⭐ 1 Star</option>
-                        </select>
-                        <textarea name="comment" placeholder="Write your comment..." class="w-full border p-3 rounded-xl h-24" required></textarea>
-                        <button class="w-full bg-{{ settings.theme }}-600 text-white py-3 rounded-xl font-bold">Post Review</button>
+                <!-- Review Section -->
+                <div class="mt-10">
+                    <h3 class="text-xl font-bold mb-6">Customer Reviews</h3>
+                    <form action="/review/{{ food._id }}" method="POST" class="bg-slate-50 p-6 rounded-[2rem] space-y-4 border border-slate-100">
+                        <div class="flex gap-2 mb-2">
+                            <select name="stars" class="bg-white border-none rounded-xl px-4 py-2 font-bold text-sm shadow-sm outline-none">
+                                <option value="5">⭐⭐⭐⭐⭐</option>
+                                <option value="4">⭐⭐⭐⭐</option>
+                                <option value="3">⭐⭐⭐</option>
+                                <option value="2">⭐⭐</option>
+                                <option value="1">⭐</option>
+                            </select>
+                        </div>
+                        <textarea name="comment" placeholder="How was the taste?" class="w-full border-none bg-white p-4 rounded-2xl h-24 text-sm shadow-sm outline-none" required></textarea>
+                        <button class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-black">Submit Review</button>
                     </form>
 
                     <div class="mt-8 space-y-4">
                         {% for r in reviews %}
-                        <div class="bg-gray-50 p-4 rounded-xl border">
-                            <div class="text-yellow-500 text-xs">
-                                {% for i in range(r.stars) %}⭐{% endfor %}
+                        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="flex text-yellow-400 text-[10px]">
+                                    {% for i in range(r.stars) %}<i class="fas fa-star"></i>{% endfor %}
+                                </div>
+                                <span class="text-[10px] text-slate-400 font-bold">Verified User</span>
                             </div>
-                            <p class="text-gray-700 mt-1">{{ r.comment }}</p>
+                            <p class="text-slate-600 text-sm italic">"{{ r.comment }}"</p>
                         </div>
                         {% endfor %}
                     </div>
@@ -234,13 +290,28 @@ def post_review(id):
 @app.route('/admin/dash')
 def admin_dash():
     if not session.get('admin_logged'): return render_template_string("""
-        <div class="max-w-md mx-auto mt-20 p-8 bg-white shadow-2xl rounded-3xl border">
-            <h2 class="text-2xl font-bold mb-6 text-center">Admin Access</h2>
-            <form action="/admin/login" method="POST" class="space-y-4">
-                <input type="password" name="pass" placeholder="Password" class="w-full border p-4 rounded-2xl">
-                <button class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold">Login</button>
-            </form>
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <head>"""+HEAD+"""<title>Admin Login</title></head>
+        <body class="gradient-bg min-h-screen flex items-center justify-center p-6">
+            <div class="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-2xl animate__animated animate__fadeIn">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-slate-100 rounded-3xl mx-auto flex items-center justify-center mb-4 text-3xl">
+                        <i class="fas fa-user-shield text-slate-800"></i>
+                    </div>
+                    <h2 class="text-3xl font-black text-slate-900">Admin Login</h2>
+                    <p class="text-slate-400 text-sm mt-2">Enter your secure password</p>
+                </div>
+                <form action="/admin/login" method="POST" class="space-y-5">
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-5 top-5 text-slate-400"></i>
+                        <input type="password" name="pass" placeholder="••••••••" class="w-full bg-slate-50 border-none p-5 pl-14 rounded-2xl focus:ring-2 focus:ring-slate-900 outline-none transition-all">
+                    </div>
+                    <button class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Access Dashboard</button>
+                </form>
+            </div>
+        </body>
+        </html>
     """)
     
     settings = get_site_settings()
@@ -248,60 +319,85 @@ def admin_dash():
     total_cats = cats_col.count_documents({})
     total_views = views_col.count_documents({})
     today_views = views_col.count_documents({"date": datetime.datetime.now().strftime("%Y-%m-%d")})
-    
     latest_comments = list(reviews_col.find().sort("_id", -1).limit(10))
     
     return render_template_string("""
     <!DOCTYPE html>
     <html>
-    <head>"""+HEAD+"""<title>Admin Dashboard</title></head>
-    <body class="flex flex-col md:flex-row">
-        <!-- Sidebar -->
-        <div class="w-full md:w-64 bg-slate-900 text-white min-h-screen p-6">
-            <h2 class="text-2xl font-bold text-{{ settings.theme }}-500 mb-10">Foodils Panel</h2>
-            <nav class="space-y-4">
-                <a href="/admin/dash" class="block p-3 bg-slate-800 rounded-xl"><i class="fas fa-chart-line mr-3"></i> Dashboard</a>
-                <a href="/admin/add-food" class="block p-3 hover:bg-slate-800 rounded-xl"><i class="fas fa-plus mr-3"></i> Add Food</a>
-                <a href="/admin/add-cat" class="block p-3 hover:bg-slate-800 rounded-xl"><i class="fas fa-list mr-3"></i> Categories</a>
-                <a href="/admin/settings" class="block p-3 hover:bg-slate-800 rounded-xl"><i class="fas fa-cog mr-3"></i> Settings</a>
-                <a href="/" class="block p-3 text-blue-400 mt-10"><i class="fas fa-eye mr-3"></i> Visit Site</a>
-                <a href="/admin/logout" class="block p-3 text-red-400"><i class="fas fa-sign-out-alt mr-3"></i> Logout</a>
+    <head>"""+HEAD+"""<title>Premium Admin Panel</title></head>
+    <body class="bg-slate-50 flex flex-col md:flex-row">
+        <!-- Modern Sidebar -->
+        <div class="w-full md:w-72 bg-white min-h-screen p-8 border-r border-slate-200">
+            <div class="flex items-center gap-3 mb-12">
+                <div class="w-10 h-10 bg-{{ settings.theme }}-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h2 class="text-xl font-black tracking-tight">ADMIN PANEL</h2>
+            </div>
+            <nav class="space-y-2">
+                <a href="/admin/dash" class="flex items-center gap-4 p-4 bg-{{ settings.theme }}-50 text-{{ settings.theme }}-600 rounded-2xl font-bold"><i class="fas fa-chart-pie w-6"></i> Dashboard</a>
+                <a href="/admin/add-food" class="flex items-center gap-4 p-4 text-slate-500 hover:bg-slate-50 rounded-2xl font-bold transition-all"><i class="fas fa-hamburger w-6"></i> Add Food</a>
+                <a href="/admin/add-cat" class="flex items-center gap-4 p-4 text-slate-500 hover:bg-slate-50 rounded-2xl font-bold transition-all"><i class="fas fa-tags w-6"></i> Categories</a>
+                <a href="/admin/settings" class="flex items-center gap-4 p-4 text-slate-500 hover:bg-slate-50 rounded-2xl font-bold transition-all"><i class="fas fa-sliders-h w-6"></i> Settings</a>
+                <div class="pt-10 space-y-2">
+                    <a href="/" class="flex items-center gap-4 p-4 text-blue-600 bg-blue-50 rounded-2xl font-bold"><i class="fas fa-external-link-alt w-6"></i> Live Site</a>
+                    <a href="/admin/logout" class="flex items-center gap-4 p-4 text-red-500 bg-red-50 rounded-2xl font-bold"><i class="fas fa-power-off w-6"></i> Logout</a>
+                </div>
             </nav>
         </div>
 
-        <!-- Content -->
-        <div class="flex-1 p-6 md:p-10">
-            <h1 class="text-3xl font-bold mb-8">System Overview</h1>
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white p-6 rounded-3xl shadow border-b-4 border-blue-500">
-                    <p class="text-gray-500 text-sm">Total Views</p>
-                    <h3 class="text-3xl font-bold">{{ total_views }}</h3>
+        <!-- Main Content -->
+        <div class="flex-1 p-8 md:p-12">
+            <header class="flex justify-between items-center mb-10">
+                <h1 class="text-3xl font-black text-slate-900">System Overview</h1>
+                <div class="text-right">
+                    <p class="text-slate-400 font-bold text-xs uppercase tracking-widest">Server Status</p>
+                    <p class="text-green-500 font-bold flex items-center justify-end gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Online</p>
                 </div>
-                <div class="bg-white p-6 rounded-3xl shadow border-b-4 border-green-500">
-                    <p class="text-gray-500 text-sm">Today Views</p>
-                    <h3 class="text-3xl font-bold">{{ today_views }}</h3>
+            </header>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                    <p class="text-slate-400 font-bold text-xs uppercase mb-2">Total Visits</p>
+                    <h3 class="text-4xl font-black">{{ total_views }}</h3>
                 </div>
-                <div class="bg-white p-6 rounded-3xl shadow border-b-4 border-orange-500">
-                    <p class="text-gray-500 text-sm">Foods Items</p>
-                    <h3 class="text-3xl font-bold">{{ total_foods }}</h3>
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                    <p class="text-slate-400 font-bold text-xs uppercase mb-2">Today's Visits</p>
+                    <h3 class="text-4xl font-black text-blue-600">{{ today_views }}</h3>
                 </div>
-                <div class="bg-white p-6 rounded-3xl shadow border-b-4 border-purple-500">
-                    <p class="text-gray-500 text-sm">Categories</p>
-                    <h3 class="text-3xl font-bold">{{ total_cats }}</h3>
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                    <p class="text-slate-400 font-bold text-xs uppercase mb-2">Active Menu</p>
+                    <h3 class="text-4xl font-black text-orange-500">{{ total_foods }}</h3>
+                </div>
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                    <p class="text-slate-400 font-bold text-xs uppercase mb-2">Categories</p>
+                    <h3 class="text-4xl font-black text-purple-600">{{ total_cats }}</h3>
                 </div>
             </div>
 
-            <div class="mt-10 bg-white p-8 rounded-3xl shadow">
-                <h3 class="text-xl font-bold mb-6">Latest Customer Comments</h3>
-                <div class="space-y-4">
-                    {% for c in comments %}
-                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border">
-                        <p class="text-gray-700 italic">"{{ c.comment }}"</p>
-                        <span class="text-xs font-bold text-gray-400">{{ c.stars }} ⭐</span>
-                    </div>
-                    {% endfor %}
+            <!-- Recent Reviews Table -->
+            <div class="mt-10 bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
+                <h3 class="text-xl font-extrabold mb-8 flex items-center gap-3"><i class="fas fa-comment-dots text-{{ settings.theme }}-500"></i> Customer Feedback</h3>
+                <div class="overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-slate-400 text-xs uppercase border-b">
+                                <th class="pb-4 font-black">Comment</th>
+                                <th class="pb-4 font-black text-center">Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            {% for c in comments %}
+                            <tr>
+                                <td class="py-5 text-slate-600 italic">"{{ c.comment }}"</td>
+                                <td class="py-5 text-center">
+                                    <span class="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-xs font-black">{{ c.stars }} ⭐</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                <button class="mt-6 text-{{ settings.theme }}-600 font-bold">See More Comments (Page 1)</button>
             </div>
         </div>
     </body>
@@ -340,20 +436,22 @@ def admin_add_food():
     return render_template_string("""
     <!DOCTYPE html>
     <html>
-    <head>"""+HEAD+"""<title>Add Food</title></head>
-    <body class="flex">
-        <div class="w-full max-w-2xl mx-auto p-10">
-            <h2 class="text-3xl font-bold mb-8">Add Food Item</h2>
-            <form method="POST" class="bg-white p-8 rounded-3xl shadow-xl space-y-5">
-                <input name="name" placeholder="Food Name" class="w-full border p-4 rounded-2xl" required>
-                <input name="image" placeholder="Main Food Image URL" class="w-full border p-4 rounded-2xl" required>
-                <input name="price" placeholder="Price (Example: 120)" class="w-full border p-4 rounded-2xl" required>
-                <select name="category" class="w-full border p-4 rounded-2xl">
+    <head>"""+HEAD+"""<title>Add Premium Food</title></head>
+    <body class="bg-slate-50 p-10">
+        <div class="max-w-3xl mx-auto">
+            <h2 class="text-3xl font-black mb-8">Add New Food Item</h2>
+            <form method="POST" class="bg-white p-10 rounded-[3rem] shadow-xl space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <input name="name" placeholder="Item Name" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900" required>
+                    <input name="price" placeholder="Price (৳)" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900" required>
+                </div>
+                <input name="image" placeholder="Main Image URL" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900" required>
+                <select name="category" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900">
                     {% for cat in categories %} <option value="{{ cat.name }}">{{ cat.name }}</option> {% endfor %}
                 </select>
-                <textarea name="screenshots" placeholder="Unlimited Screenshots (URL1, URL2, URL3...)" class="w-full border p-4 rounded-2xl h-24"></textarea>
-                <textarea name="details" placeholder="Full Details About the Food" class="w-full border p-4 rounded-2xl h-40" required></textarea>
-                <button class="w-full bg-orange-600 text-white py-4 rounded-2xl font-bold text-lg">Save Item</button>
+                <textarea name="screenshots" placeholder="Gallery URLs (URL1, URL2...)" class="w-full bg-slate-50 p-5 rounded-2xl h-24 border-none outline-none focus:ring-2 focus:ring-slate-900"></textarea>
+                <textarea name="details" placeholder="Full Description..." class="w-full bg-slate-50 p-5 rounded-2xl h-40 border-none outline-none focus:ring-2 focus:ring-slate-900" required></textarea>
+                <button class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all">Publish Item</button>
             </form>
         </div>
     </body>
@@ -370,26 +468,28 @@ def admin_add_cat():
     return render_template_string("""
     <!DOCTYPE html>
     <html>
-    <head>"""+HEAD+"""<title>Categories</title></head>
-    <body class="p-10 bg-gray-100">
-        <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-10">
-            <form method="POST" class="bg-white p-8 rounded-3xl shadow h-fit">
-                <h3 class="text-xl font-bold mb-6">Create Category</h3>
-                <input name="name" placeholder="Category Name" class="w-full border p-4 rounded-2xl mb-4">
-                <input name="logo" placeholder="Logo Image URL" class="w-full border p-4 rounded-2xl mb-4">
-                <button class="w-full bg-slate-900 text-white py-4 rounded-2xl">Add Category</button>
+    <head>"""+HEAD+"""<title>Categories Manager</title></head>
+    <body class="p-10 bg-slate-50">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-10">
+            <form method="POST" class="bg-white p-10 rounded-[3rem] shadow-xl h-fit">
+                <h3 class="text-2xl font-black mb-6">Create Category</h3>
+                <input name="name" placeholder="Category Name" class="w-full bg-slate-50 p-5 rounded-2xl mb-4 border-none outline-none focus:ring-2 focus:ring-slate-900">
+                <input name="logo" placeholder="Logo Image URL" class="w-full bg-slate-50 p-5 rounded-2xl mb-6 border-none outline-none focus:ring-2 focus:ring-slate-900">
+                <button class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold">Add Category</button>
             </form>
-            <div class="bg-white p-8 rounded-3xl shadow">
-                <h3 class="text-xl font-bold mb-6">All Categories</h3>
-                {% for cat in categories %}
-                <div class="flex justify-between items-center py-3 border-b">
-                    <div class="flex items-center gap-3">
-                        <img src="{{ cat.logo }}" class="w-8 h-8 rounded-full">
-                        <span>{{ cat.name }}</span>
+            <div class="bg-white p-10 rounded-[3rem] shadow-xl">
+                <h3 class="text-2xl font-black mb-6">Existing Categories</h3>
+                <div class="space-y-4">
+                    {% for cat in categories %}
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div class="flex items-center gap-4">
+                            <img src="{{ cat.logo }}" class="w-12 h-12 rounded-xl object-cover ring-2 ring-white">
+                            <span class="font-bold text-slate-700">{{ cat.name }}</span>
+                        </div>
+                        <a href="/admin/del-cat/{{ cat._id }}" class="text-red-500 bg-red-100 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash-alt"></i></a>
                     </div>
-                    <a href="/admin/del-cat/{{ cat._id }}" class="text-red-500"><i class="fas fa-trash"></i></a>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
     </body>
@@ -425,29 +525,53 @@ def admin_settings():
     return render_template_string("""
     <!DOCTYPE html>
     <html>
-    <head>"""+HEAD+"""<title>Settings</title></head>
-    <body class="p-10 bg-gray-50">
-        <form method="POST" class="max-w-4xl mx-auto bg-white p-10 rounded-3xl shadow grid grid-cols-1 md:grid-cols-2 gap-6">
-            <h2 class="col-span-2 text-3xl font-bold mb-4">Site Customization</h2>
-            <div><label class="font-bold">Site Name</label><input name="name" value="{{ s.name }}" class="w-full border p-3 rounded-xl"></div>
-            <div><label class="font-bold">Brand Logo URL</label><input name="logo" value="{{ s.logo }}" class="w-full border p-3 rounded-xl"></div>
-            <div><label class="font-bold">WhatsApp Number</label><input name="whatsapp" value="{{ s.whatsapp }}" class="w-full border p-3 rounded-xl"></div>
-            <div><label class="font-bold">Facebook Profile URL</label><input name="fb" value="{{ s.fb }}" class="w-full border p-3 rounded-xl"></div>
-            <div><label class="font-bold">Admin Password</label><input name="pass" value="{{ s.pass }}" class="w-full border p-3 rounded-xl"></div>
-            <div><label class="font-bold">Theme Color (Tailwind)</label>
-                <select name="theme" class="w-full border p-3 rounded-xl">
-                    <option value="orange" {% if s.theme=='orange' %}selected{% endif %}>Orange</option>
-                    <option value="blue" {% if s.theme=='blue' %}selected{% endif %}>Blue</option>
-                    <option value="red" {% if s.theme=='red' %}selected{% endif %}>Red</option>
-                    <option value="green" {% if s.theme=='green' %}selected{% endif %}>Green</option>
-                    <option value="pink" {% if s.theme=='pink' %}selected{% endif %}>Pink</option>
-                </select>
+    <head>"""+HEAD+"""<title>System Settings</title></head>
+    <body class="p-10 bg-slate-50">
+        <form method="POST" class="max-w-4xl mx-auto bg-white p-12 rounded-[3rem] shadow-xl">
+            <h2 class="text-3xl font-black mb-10 flex items-center gap-4 text-slate-900"><i class="fas fa-tools text-{{ s.theme }}-500"></i> Settings & UI</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-2">
+                    <label class="font-black text-xs uppercase text-slate-400 px-1">Brand Name</label>
+                    <input name="name" value="{{ s.name }}" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900">
+                </div>
+                <div class="space-y-2">
+                    <label class="font-black text-xs uppercase text-slate-400 px-1">Logo URL</label>
+                    <input name="logo" value="{{ s.logo }}" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900">
+                </div>
+                <div class="space-y-2">
+                    <label class="font-black text-xs uppercase text-slate-400 px-1">WhatsApp Business</label>
+                    <input name="whatsapp" value="{{ s.whatsapp }}" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900">
+                </div>
+                <div class="space-y-2">
+                    <label class="font-black text-xs uppercase text-slate-400 px-1">Facebook URL</label>
+                    <input name="fb" value="{{ s.fb }}" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900">
+                </div>
+                <div class="space-y-2">
+                    <label class="font-black text-xs uppercase text-slate-400 px-1">Admin Password</label>
+                    <input name="pass" value="{{ s.pass }}" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900">
+                </div>
+                <div class="space-y-2">
+                    <label class="font-black text-xs uppercase text-slate-400 px-1">Accent Theme</label>
+                    <select name="theme" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900">
+                        <option value="orange" {% if s.theme=='orange' %}selected{% endif %}>Sunset Orange</option>
+                        <option value="blue" {% if s.theme=='blue' %}selected{% endif %}>Ocean Blue</option>
+                        <option value="red" {% if s.theme=='red' %}selected{% endif %}>Crimson Red</option>
+                        <option value="green" {% if s.theme=='green' %}selected{% endif %}>Eco Green</option>
+                        <option value="pink" {% if s.theme=='pink' %}selected{% endif %}>Hot Pink</option>
+                        <option value="indigo" {% if s.theme=='indigo' %}selected{% endif %}>Indigo</option>
+                    </select>
+                </div>
+                <div class="col-span-2 space-y-2">
+                    <label class="font-black text-xs uppercase text-slate-400 px-1">Footer Tagline</label>
+                    <input name="footer_text" value="{{ s.footer_text }}" class="w-full bg-slate-50 p-5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-slate-900">
+                </div>
+                <div class="col-span-2 space-y-2">
+                    <label class="font-black text-xs uppercase text-slate-400 px-1">Privacy Content</label>
+                    <textarea name="privacy" class="w-full bg-slate-50 p-5 rounded-2xl h-32 border-none outline-none focus:ring-2 focus:ring-slate-900">{{ s.privacy }}</textarea>
+                </div>
             </div>
-            <div class="col-span-2"><label class="font-bold">Footer Content</label><input name="footer_text" value="{{ s.footer_text }}" class="w-full border p-3 rounded-xl"></div>
-            <div class="col-span-2"><label class="font-bold">Privacy Policy Box</label><textarea name="privacy" class="w-full border p-3 rounded-xl h-24">{{ s.privacy }}</textarea></div>
-            <div><label class="font-bold">DMCA Text</label><input name="dmca" value="{{ s.dmca }}" class="w-full border p-3 rounded-xl"></div>
-            <div><label class="font-bold">Copyright Text</label><input name="copyright" value="{{ s.copyright }}" class="w-full border p-3 rounded-xl"></div>
-            <button class="col-span-2 bg-slate-900 text-white py-5 rounded-2xl font-bold text-xl mt-6">Save All Changes</button>
+            <button class="w-full bg-slate-900 text-white py-6 rounded-3xl font-black text-xl mt-12 shadow-2xl hover:bg-black transition-all">Save All Configurations</button>
         </form>
     </body>
     </html>
