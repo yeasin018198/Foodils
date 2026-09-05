@@ -312,13 +312,13 @@ def cart_view():
         
         <div class="fixed bottom-0 left-0 right-0 p-6 bg-white border-t shadow-2xl animate__animated animate__fadeInUp">
             <div class="space-y-2 mb-4 text-sm font-bold text-gray-600">
-                <div class="flex justify-between"><span>আইটেম মোট:</span> <span id="subTotal">৳0</span></div>
-                <div class="flex justify-between"><span>টেক্স ({{ settings.tax_percent }}%):</span> <span id="taxAmount">৳0</span></div>
-                <div class="flex justify-between text-{{ settings.theme }}-600 italic"><span>ডেলিভারি চার্জ:</span> <span>{{ settings.delivery_msg }}</span></div>
+                <div class="flex justify-between"><span>Total Items:</span> <span id="subTotal">৳0</span></div>
+                <div class="flex justify-between"><span>Tax ({{ settings.tax_percent }}%):</span> <span id="taxAmount">৳0</span></div>
+                <div class="flex justify-between text-{{ settings.theme }}-600 italic"><span>Delivery Charge:</span> <span>{{ settings.delivery_msg }}</span></div>
             </div>
             <div class="flex justify-between text-xl font-black mb-4 border-t pt-2"><span>সর্বমোট বিল:</span> <span id="totalPrice">৳0</span></div>
             <button onclick="sendOrder()" class="w-full bg-green-500 text-white py-5 rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl">
-                <i class="fab fa-whatsapp text-2xl"></i> হোয়াটসঅ্যাপে অর্ডার দিন
+                <i class="fab fa-whatsapp text-2xl"></i> Send your order and location on WhatsApp
             </button>
         </div>
 
@@ -328,7 +328,7 @@ def cart_view():
             function renderCart() {
                 let list = document.getElementById('cartList');
                 let subTotal = 0;
-                list.innerHTML = cart.length ? '' : '<div class="text-center py-20 text-gray-400"><i class="fas fa-shopping-basket text-5xl mb-4"></i><p>কার্ট খালি!</p></div>';
+                list.innerHTML = cart.length ? '' : '<div class="text-center py-20 text-gray-400"><i class="fas fa-shopping-basket text-5xl mb-4"></i><p>Your cart is empty!</p></div>';
                 
                 cart.forEach((item, i) => {
                     subTotal += item.price * item.qty;
