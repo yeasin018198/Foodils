@@ -238,7 +238,7 @@ def food_details(id):
                 <!-- Options -->
                 {% if food.addons %}
                 <div class="mb-8">
-                    <h4 class="font-bold text-lg mb-4 text-green-600">Extras / কুল্লু সাই (Add-ons)</h4>
+                    <h4 class="font-bold text-lg mb-4 text-green-600">( These must be provided )</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {% for opt in food.addons %}
                         <label class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border cursor-pointer">
@@ -252,7 +252,7 @@ def food_details(id):
 
                 {% if food.exclusions %}
                 <div class="mb-8">
-                    <h4 class="font-bold text-lg mb-4 text-red-600">Without / ছাড়া (Exclusions)</h4>
+                    <h4 class="font-bold text-lg mb-4 text-red-600">( Don't give those)</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {% for opt in food.exclusions %}
                         <label class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border cursor-pointer">
