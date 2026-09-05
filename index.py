@@ -175,7 +175,7 @@ def category_foods(name):
         <nav class="glass sticky top-0 z-50 px-4 py-3 flex items-center justify-between border-b animate__animated animate__fadeInDown">
             <div class="flex items-center gap-4">
                 <a href="/" class="bg-gray-100 w-10 h-10 flex items-center justify-center rounded-full"><i class="fas fa-arrow-left"></i></a>
-                <h1 class="text-xl font-bold">{{ name }} আইটেমসমূহ</h1>
+                <h1 class="text-xl font-bold">{{ name }} All Items</h1>
             </div>
             <a href="/cart" class="relative text-2xl text-gray-700">
                 <i class="fas fa-shopping-cart"></i>
