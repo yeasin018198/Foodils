@@ -217,7 +217,7 @@ def food_details(id):
             
             <div class="p-6 md:p-12 -mt-10 bg-white rounded-t-[40px] relative z-10 animate__animated animate__slideInUp">
                 <h1 class="text-3xl md:text-6xl font-black text-gray-900 leading-tight">{{ food.name }}</h1>
-                <p class="text-3xl md:text-4xl font-black text-{{ settings.theme }}-600 mt-4">৳{{ food.price }}</p>
+                <p class="text-3xl md:text-4xl font-black text-{{ settings.theme }}-600 mt-4">SR{{ food.price }}</p>
 
                 <div class="grid grid-cols-4 md:grid-cols-6 gap-3 my-8">
                     {% for ss in food.screenshots %}
