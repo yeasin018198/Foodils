@@ -653,12 +653,63 @@ def admin_settings():
         <a href="/admin/dash" class="inline-block mb-6 bg-gray-200 px-6 py-2 rounded-xl font-bold">Back to Dash</a>
         <form method="POST" class="max-w-4xl mx-auto bg-white p-10 rounded-[60px] shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8 border">
             <h2 class="col-span-full text-4xl font-black mb-4">Settings</h2>
-            <input name="name" value="{{ s.name }}" placeholder="Site Name" class="w-full border p-4 rounded-2xl outline-none">
-            <input name="logo" value="{{ s.logo }}" placeholder="Logo URL" class="w-full border p-4 rounded-2xl outline-none">
-            <input name="whatsapp" value="{{ s.whatsapp }}" placeholder="WhatsApp" class="w-full border p-4 rounded-2xl outline-none">
-            <input name="pass" value="{{ s.pass }}" placeholder="Admin Pass" class="w-full border p-4 rounded-2xl outline-none">
-            <input name="header_text" value="{{ s.header_text }}" placeholder="Header Text" class="col-span-full border p-4 rounded-2xl outline-none">
-            <button class="col-span-full bg-black text-white py-6 rounded-3xl font-black text-2xl">Apply</button>
+            
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">Site Name</label>
+                <input name="name" value="{{ s.name }}" placeholder="Site Name" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">Logo URL</label>
+                <input name="logo" value="{{ s.logo }}" placeholder="Logo URL" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">WhatsApp Number</label>
+                <input name="whatsapp" value="{{ s.whatsapp }}" placeholder="WhatsApp" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">Facebook Link</label>
+                <input name="fb" value="{{ s.fb }}" placeholder="Facebook Link" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">Admin Password</label>
+                <input name="pass" value="{{ s.pass }}" placeholder="Admin Pass" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">Theme Color (e.g. orange, red, blue)</label>
+                <input name="theme" value="{{ s.theme }}" placeholder="orange" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2 col-span-full">
+                <label class="font-bold text-gray-600">Header Text</label>
+                <input name="header_text" value="{{ s.header_text }}" placeholder="Header Text" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2 col-span-full">
+                <label class="font-bold text-gray-600">Footer Text</label>
+                <textarea name="footer_text" placeholder="Footer Text" class="w-full border p-4 rounded-2xl outline-none h-24">{{ s.footer_text }}</textarea>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">DMCA Text</label>
+                <input name="dmca" value="{{ s.dmca }}" placeholder="DMCA Protected" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-bold text-gray-600">Copyright Text</label>
+                <input name="copyright" value="{{ s.copyright }}" placeholder="© 2024 Your Brand" class="w-full border p-4 rounded-2xl outline-none">
+            </div>
+
+            <div class="flex flex-col gap-2 col-span-full">
+                <label class="font-bold text-gray-600">Privacy Policy Content</label>
+                <textarea name="privacy" placeholder="Privacy Policy Content" class="w-full border p-4 rounded-2xl outline-none h-32">{{ s.privacy }}</textarea>
+            </div>
+
+            <button class="col-span-full bg-black text-white py-6 rounded-3xl font-black text-2xl hover:bg-gray-800 transition-all">Apply All Changes</button>
         </form>
     </body>
     """, s=settings)
